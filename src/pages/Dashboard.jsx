@@ -6,6 +6,7 @@ import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
 import StockTicker from '../components/StockTicker';
 import { formatPassUpForCopy } from '../utils/formatters';
+import Logo from '../components/Logo';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -112,9 +113,12 @@ function Dashboard() {
       <div className="sticky top-0 z-10 bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-bold">{agentName}</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Sales Agent</p>
+            <div className="flex items-center gap-3">
+              <Logo className="w-10 h-10" />
+              <div>
+                <h1 className="text-xl font-bold">{agentName}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Vici Sales Agent</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button

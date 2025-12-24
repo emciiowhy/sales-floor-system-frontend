@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
+import Logo from '../components/Logo';
 
 function AgentSetup() {
   const [name, setName] = useState('');
@@ -42,8 +43,13 @@ function AgentSetup() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="card max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Sales Floor</h1>
-          <p className="text-gray-600 dark:text-gray-400">Enter your name to get started Made by: Rocky Knox</p>
+          <div className="flex justify-center mb-4">
+            <Logo className="w-20 h-20" />
+          </div>
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Vici Sales
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">Enter your name to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

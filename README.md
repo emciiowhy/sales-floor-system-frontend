@@ -1,6 +1,6 @@
-# Sales Floor System - Frontend
+# Vici Sales - Frontend
 
-Frontend application for the Sales Floor Management System.
+Frontend application for Vici Sales Management System.
 
 ## Tech Stack
 

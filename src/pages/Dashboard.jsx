@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target } from 'lucide-react';
+import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
 import StockTicker from '../components/StockTicker';
 import { formatPassUpForCopy } from '../utils/formatters';
 import Logo from '../components/Logo';
+import BreakReminder from '../components/BreakReminder';
+import BioBreakTimer from '../components/BioBreakTimer';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [scriptCopied, setScriptCopied] = useState(false);
+  const [showBreakSchedule, setShowBreakSchedule] = useState(false);
 
   const agentId = localStorage.getItem('agentId');
   const agentName = localStorage.getItem('agentName');
@@ -142,6 +145,12 @@ function Dashboard() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        {/* Break Reminder */}
+        <BreakReminder />
+
+        {/* Bio Break Timer */}
+        <BioBreakTimer agentId={agentId} />
+
         {/* Stats Card */}
         <div className="card">
           <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
@@ -215,14 +224,31 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* Break Schedule and Targets */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Employee Break Schedule */}
-          <div className="card">
-            <div className="flex items-center gap-2 mb-4">
+        {/* Break Schedule and Targets - Collapsible */}
+        <div className="card">
+          <button
+            onClick={() => setShowBreakSchedule(!showBreakSchedule)}
+            className="w-full flex items-center justify-between mb-4 text-left hover:opacity-80 transition-opacity"
+          >
+            <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-lg font-bold">Employee Break Schedule</h2>
+              <h2 className="text-lg font-bold">Break Schedule & Targets</h2>
             </div>
+            {showBreakSchedule ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </button>
+
+          {showBreakSchedule && (
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Employee Break Schedule */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-md font-bold">Employee Break Schedule</h3>
+                </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
                 <span className="font-medium text-sm">Shift Hours:</span>
@@ -249,15 +275,15 @@ function Dashboard() {
                   Bio break: 15 minutes total per shift, not per break.
                 </p>
               </div>
+              </div>
             </div>
-          </div>
 
-          {/* Agent Targets */}
-          <div className="card">
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-lg font-bold">Agent Targets</h2>
-            </div>
+            {/* Agent Targets */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-md font-bold">Agent Targets</h3>
+              </div>
             <div className="space-y-4">
               {/* Daily Targets */}
               <div>
@@ -300,7 +326,8 @@ function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Script Card */}

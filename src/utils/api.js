@@ -1,4 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Get API URL from environment variable
+// In Vercel, set VITE_API_URL to your Render backend URL (e.g., https://your-backend.onrender.com)
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:3001');
+
+// Validate API URL in production
+if (import.meta.env.PROD && !API_URL) {
+  console.error('❌ VITE_API_URL environment variable is not set in Vercel!');
+  console.error('Please set VITE_API_URL in Vercel project settings to your Render backend URL.');
+}
 
 async function fetchAPI(endpoint, options = {}) {
   const response = await fetch(`${API_URL}${endpoint}`, {

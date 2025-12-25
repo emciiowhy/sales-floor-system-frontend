@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X } from 'lucide-react';
+import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
 import StockTicker from '../components/StockTicker';
-import BreakSchedule from '../components/BreakSchedule';
 import { formatPassUpForCopy } from '../utils/formatters';
+import Logo from '../components/Logo';
+import BreakReminder from '../components/BreakReminder';
+import BioBreakTimer from '../components/BioBreakTimer';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [scriptCopied, setScriptCopied] = useState(false);
+  const [showBreakSchedule, setShowBreakSchedule] = useState(false);
 
   const agentId = localStorage.getItem('agentId');
   const agentName = localStorage.getItem('agentName');
@@ -113,9 +116,12 @@ function Dashboard() {
       <div className="sticky top-0 z-10 bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-bold">{agentName}</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Sales Agent</p>
+            <div className="flex items-center gap-3">
+              <Logo className="w-10 h-10" />
+              <div>
+                <h1 className="text-xl font-bold">{agentName}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Vici Sales Agent</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -139,6 +145,12 @@ function Dashboard() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        {/* Break Reminder */}
+        <BreakReminder />
+
+        {/* Bio Break Timer */}
+        <BioBreakTimer agentId={agentId} />
+
         {/* Stats Card */}
         <div className="card">
           <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
@@ -179,9 +191,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Break Schedule */}
-        <BreakSchedule agentId={agentId} />
-
         {/* Quick Actions */}
         <div className="grid sm:grid-cols-2 gap-4">
           <button
@@ -213,6 +222,112 @@ function Dashboard() {
               </div>
             </div>
           </button>
+        </div>
+
+        {/* Break Schedule and Targets - Collapsible */}
+        <div className="card">
+          <button
+            onClick={() => setShowBreakSchedule(!showBreakSchedule)}
+            className="w-full flex items-center justify-between mb-4 text-left hover:opacity-80 transition-opacity"
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-lg font-bold">Break Schedule & Targets</h2>
+            </div>
+            {showBreakSchedule ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </button>
+
+          {showBreakSchedule && (
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Employee Break Schedule */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-md font-bold">Employee Break Schedule</h3>
+                </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                <span className="font-medium text-sm">Shift Hours:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">9:30 PM – 6:30 AM</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <span className="font-medium text-sm">1st Break:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">1:00 AM – 1:15 AM</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <span className="font-medium text-sm">2nd Break:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">3:00 AM – 3:15 AM</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <span className="font-medium text-sm">Lunch Break:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">5:00 AM – 5:30 AM</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                <span className="font-medium text-sm">End of Shift:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">6:30 AM</span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border">
+                <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                  Bio break: 15 minutes total per shift, not per break.
+                </p>
+              </div>
+              </div>
+            </div>
+
+            {/* Agent Targets */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-md font-bold">Agent Targets</h3>
+              </div>
+            <div className="space-y-4">
+              {/* Daily Targets */}
+              <div>
+                <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Daily Targets</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <span className="text-sm">HOT, WARM, INT:</span>
+                    <span className="text-sm font-semibold">8 total per day</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                    <span className="text-sm">Pass Up Total:</span>
+                    <span className="text-sm font-semibold">10+ per day</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                    (WSMSNT, TIHU, HOT, WARM, INT)
+                  </p>
+                </div>
+              </div>
+
+              {/* Bonus Targets */}
+              <div className="pt-3 border-t border-gray-200 dark:border-dark-border">
+                <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Bonus Targets (10K Bonus)</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <span className="text-sm">Daily (HOT, WARM, INT):</span>
+                    <span className="text-sm font-semibold">8 total</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <span className="text-sm">Weekly:</span>
+                    <span className="text-sm font-semibold">40</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <span className="text-sm">Bi-weekly:</span>
+                    <span className="text-sm font-semibold">60</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <span className="text-sm">Monthly:</span>
+                    <span className="text-sm font-semibold">100</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+          )}
         </div>
 
         {/* Script Card */}

@@ -9,24 +9,35 @@ if (import.meta.env.PROD && !API_URL) {
 }
 
 async function fetchAPI(endpoint, options = {}) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    const errorMessage = error.error || 'Request failed';
-    const apiError = new Error(errorMessage);
-    apiError.status = response.status;
-    apiError.statusText = response.statusText;
-    throw apiError;
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      const errorMessage = error.error || 'Request failed';
+      const apiError = new Error(errorMessage);
+      apiError.status = response.status;
+      apiError.statusText = response.statusText;
+      throw apiError;
+    }
+
+    return response.json();
+  } catch (error) {
+    // Handle network errors (connection refused, etc.)
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      const connectionError = new Error('Backend server is not running. Please start the backend server on port 3001.');
+      connectionError.isConnectionError = true;
+      connectionError.originalError = error;
+      throw connectionError;
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 export const api = {

@@ -22,6 +22,10 @@ function BioBreakTimer({ agentId }) {
       setTotalUsed(data.bioBreakPool?.used || 0);
     } catch (error) {
       console.error('Failed to load bio break data:', error);
+      // Silently fail for connection errors to avoid spam
+      if (!error.isConnectionError) {
+        // Only log non-connection errors
+      }
     }
   };
 

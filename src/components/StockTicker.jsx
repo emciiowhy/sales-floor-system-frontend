@@ -19,7 +19,10 @@ function StockTicker({ symbol = 'QTZM' }) {
         setTimeout(() => setIsLive(false), 2000);
       } catch (err) {
         console.error('Failed to fetch stock quote:', err);
-        setError(true);
+        // Only show error if it's not a connection error (to avoid spam)
+        if (!err.isConnectionError) {
+          setError(true);
+        }
       }
     };
 

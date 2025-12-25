@@ -19,7 +19,11 @@ async function fetchAPI(endpoint, options = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || 'Request failed');
+    const errorMessage = error.error || 'Request failed';
+    const apiError = new Error(errorMessage);
+    apiError.status = response.status;
+    apiError.statusText = response.statusText;
+    throw apiError;
   }
 
   return response.json();

@@ -60,7 +60,12 @@ function Dashboard() {
       try {
         agentData = await api.getAgent(agentId);
       } catch (agentError) {
-        if (agentError.message?.includes('404') || agentError.message?.includes('not found')) {
+        // Check for 404 status or "not found" in error message (case insensitive)
+        const isNotFound = agentError.status === 404 || 
+                          agentError.message?.toLowerCase().includes('not found') ||
+                          agentError.message?.toLowerCase().includes('404');
+        
+        if (isNotFound) {
           toast.error('Agent not found. Please log in again.');
           localStorage.removeItem('agentId');
           localStorage.removeItem('agentName');

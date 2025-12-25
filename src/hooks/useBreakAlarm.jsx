@@ -53,6 +53,10 @@ export function useBreakAlarm(agentId) {
         setSchedule(data);
       } catch (error) {
         console.error('Failed to load break schedule:', error);
+        // Don't show error toast for 404 - schedule will be created on first access
+        if (error.message && !error.message.includes('404')) {
+          console.warn('Break schedule not found, will be created on first update');
+        }
       }
     };
 
@@ -175,6 +179,7 @@ export function useBreakAlarm(agentId) {
         setSchedule(updated);
         return updated;
       } catch (error) {
+        console.error('Failed to update break schedule:', error);
         throw error;
       }
     }

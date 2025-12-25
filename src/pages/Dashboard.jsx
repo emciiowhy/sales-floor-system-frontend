@@ -41,12 +41,29 @@ function Dashboard() {
         api.getAgent(agentId)
       ]);
       setStats(statsData);
-      setRecentPassUps(passUpsData);
-      const script = agentData.customScript || '';
+      setRecentPassUps(passUpsData || []);
+      const script = agentData?.customScript || '';
       setCustomScript(script);
       setEditedScript(script);
     } catch (error) {
-      toast.error('Failed to load dashboard');
+      console.error('Failed to load dashboard:', error);
+      toast.error('Failed to load dashboard: ' + (error.message || 'Unknown error'));
+      // Set default stats to prevent null errors
+      setStats({
+        hot: 0,
+        warm: 0,
+        int: 0,
+        tihu: 0,
+        wsmsnt: 0,
+        total: 0,
+        targetProgress: {
+          productive: 0,
+          productiveGoal: 8,
+          productivePercent: 0,
+          totalGoal: 10,
+          totalPercent: 0
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -152,44 +169,51 @@ function Dashboard() {
         <BioBreakTimer agentId={agentId} />
 
         {/* Stats Card */}
-        <div className="card">
-          <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
-            <StatBadge label="HOT" value={stats.hot} color="bg-hot" />
-            <StatBadge label="WARM" value={stats.warm} color="bg-warm" />
-            <StatBadge label="INT" value={stats.int} color="bg-int" />
-            <StatBadge label="TIHU" value={stats.tihu} color="bg-tihu" />
-            <StatBadge label="WSMSNT" value={stats.wsmsnt} color="bg-wsmsnt" />
-          </div>
+        {stats ? (
+          <div className="card">
+            <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+              <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" />
+              <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" />
+              <StatBadge label="INT" value={stats.int || 0} color="bg-int" />
+              <StatBadge label="TIHU" value={stats.tihu || 0} color="bg-tihu" />
+              <StatBadge label="WSMSNT" value={stats.wsmsnt || 0} color="bg-wsmsnt" />
+            </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium">Productive Pass-Ups</span>
-              <span className="text-gray-600 dark:text-gray-400">
-                {stats.targetProgress.productive} / {stats.targetProgress.productiveGoal}
-              </span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">Productive Pass-Ups</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  {stats.targetProgress?.productive || 0} / {stats.targetProgress?.productiveGoal || 0}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div 
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(stats.targetProgress?.productivePercent || 0, 100)}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                {(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0) > 0 
+                  ? `${(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0)} more to reach target`
+                  : '🎉 Target reached!'}
+              </p>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-              <div 
-                className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(stats.targetProgress.productivePercent, 100)}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {stats.targetProgress.productiveGoal - stats.targetProgress.productive > 0 
-                ? `${stats.targetProgress.productiveGoal - stats.targetProgress.productive} more to reach target`
-                : '🎉 Target reached!'}
-            </p>
-          </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Total Pass-Ups Today</span>
-              <span className="text-2xl font-bold">{stats.total}</span>
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total Pass-Ups Today</span>
+                <span className="text-2xl font-bold">{stats.total || 0}</span>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="card">
+            <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
+            <p className="text-gray-600 dark:text-gray-400">Failed to load stats. Please refresh the page.</p>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid sm:grid-cols-2 gap-4">

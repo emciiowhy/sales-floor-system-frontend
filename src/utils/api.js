@@ -78,4 +78,14 @@ export const api = {
 
   getTodayBreaks: (agentId) =>
     fetchAPI(`/api/breaks/agent/${agentId}/today`),
+
+  // Break Schedules
+  getBreakSchedule: (agentId) =>
+    fetchAPI(`/api/break-schedules/agent/${agentId}`),
+
+  updateBreakSchedule: (agentId, data) =>
+    fetchAPI(`/api/break-schedules/agent/${agentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 };

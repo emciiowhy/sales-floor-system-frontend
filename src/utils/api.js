@@ -9,14 +9,9 @@ if (import.meta.env.PROD && !API_URL) {
 }
 
 async function fetchAPI(endpoint, options = {}) {
-  // #region agent log
   const fullUrl = `${API_URL}${endpoint}`;
-  fetch('http://127.0.0.1:7242/ingest/50295095-33be-4fbf-84c4-816f69fcce29',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:11',message:'fetchAPI entry',data:{endpoint,fullUrl,apiUrl:API_URL,method:options.method||'GET'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
+  
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/50295095-33be-4fbf-84c4-816f69fcce29',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:14',message:'Before fetch',data:{fullUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     const response = await fetch(fullUrl, {
       ...options,
       headers: {
@@ -24,9 +19,6 @@ async function fetchAPI(endpoint, options = {}) {
         ...options.headers,
       },
     });
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/50295095-33be-4fbf-84c4-816f69fcce29',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:25',message:'After fetch',data:{status:response.status,statusText:response.statusText,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Request failed' }));
@@ -34,20 +26,14 @@ async function fetchAPI(endpoint, options = {}) {
       const apiError = new Error(errorMessage);
       apiError.status = response.status;
       apiError.statusText = response.statusText;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/50295095-33be-4fbf-84c4-816f69fcce29',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:33',message:'Response not OK',data:{status:response.status,errorMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       throw apiError;
     }
 
     return response.json();
   } catch (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/50295095-33be-4fbf-84c4-816f69fcce29',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api.js:37',message:'fetchAPI catch',data:{errorName:error.name,errorMessage:error.message,isConnectionError:error.isConnectionError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     // Handle network errors (connection refused, etc.)
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      const connectionError = new Error('Backend server is not running. Please start the backend server on port 3001.');
+      const connectionError = new Error('Backend server is not running. Please start the backend server.');
       connectionError.isConnectionError = true;
       connectionError.originalError = error;
       throw connectionError;

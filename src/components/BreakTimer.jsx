@@ -24,27 +24,46 @@ function BreakTimer({ agentId }) {
       return;
     }
 
+    // Get current time (assuming browser is set to Philippine Time)
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
+    const SHIFT_START = 21 * 60 + 30; // 9:30 PM = 1290 minutes
+    const SHIFT_END = 6 * 60 + 30; // 6:30 AM = 390 minutes
 
     const breaks = [
       { type: 'FIRST', time: parseTime(schedule.firstBreak) },
       schedule.secondBreak && { type: 'SECOND', time: parseTime(schedule.secondBreak) },
-      { type: 'LUNCH', time: parseTime(schedule.lunchTime) },
-      { type: 'END', time: parseTime(schedule.endOfShift) }
+      { type: 'LUNCH', time: parseTime(schedule.lunchTime) }
     ].filter(Boolean);
+
+    // Determine if we're in shift hours (9:30 PM - 6:30 AM)
+    const isInShiftHours = currentTime >= SHIFT_START || currentTime < SHIFT_END;
 
     // Find next break
     let next = null;
     let minDiff = Infinity;
 
     for (const breakItem of breaks) {
-      let diff = breakItem.time - currentTime;
-      if (diff <= 0) {
-        // Break already passed today, check tomorrow
-        diff = (24 * 60) + diff;
+      let diff;
+      
+      if (isInShiftHours) {
+        // In shift hours
+        if (currentTime < breakItem.time) {
+          // Break hasn't happened yet today
+          diff = breakItem.time - currentTime;
+        } else {
+          // Break already passed, next one is tomorrow (but still same shift)
+          diff = (24 * 60) - currentTime + breakItem.time;
+        }
+      } else {
+        // Outside shift hours, next break is at next shift
+        const hoursUntilShift = currentTime < SHIFT_START 
+          ? SHIFT_START - currentTime 
+          : (24 * 60) - currentTime + SHIFT_START;
+        diff = hoursUntilShift + breakItem.time;
       }
-      if (diff < minDiff && breakItem.type !== 'END') {
+      
+      if (diff < minDiff) {
         minDiff = diff;
         next = breakItem;
       }

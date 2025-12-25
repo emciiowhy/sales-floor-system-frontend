@@ -7,10 +7,10 @@ function BreakSchedule({ agentId }) {
   const { schedule, nextAlarm, alarmTriggered, updateSchedule } = useBreakAlarm(agentId);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstBreak: '10:00',
-    secondBreak: '14:00',
-    lunchTime: '12:30',
-    endOfShift: '17:00',
+    firstBreak: '01:00',
+    secondBreak: '03:00',
+    lunchTime: '05:00',
+    endOfShift: '06:30',
     alarmEnabled: true,
     alarmVolume: 70
   });

@@ -59,14 +59,18 @@ export function useBreakAlarm(agentId) {
   }, [agentId]);
 
   // Calculate next alarm
+  // Handles overnight shift: 9:30 PM - 6:30 AM (Philippine Time)
   const calculateNextAlarm = useCallback(() => {
     if (!schedule || !schedule.alarmEnabled) {
       setNextAlarm(null);
       return;
     }
 
+    // Get current time (assuming browser is set to Philippine Time)
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
+    const SHIFT_START = 21 * 60 + 30; // 9:30 PM = 1290 minutes
+    const SHIFT_END = 6 * 60 + 30; // 6:30 AM = 390 minutes
 
     const timeToMinutes = (timeString) => {
       if (!timeString) return null;
@@ -77,27 +81,58 @@ export function useBreakAlarm(agentId) {
     const breaks = [
       { type: 'First Break', time: timeToMinutes(schedule.firstBreak) },
       schedule.secondBreak && { type: 'Second Break', time: timeToMinutes(schedule.secondBreak) },
-      { type: 'Lunch', time: timeToMinutes(schedule.lunchTime) },
-      { type: 'End of Shift', time: timeToMinutes(schedule.endOfShift) }
+      { type: 'Lunch', time: timeToMinutes(schedule.lunchTime) }
     ].filter(item => item && item.time !== null);
+
+    // Determine if we're in shift hours (9:30 PM - 6:30 AM)
+    const isInShiftHours = currentTime >= SHIFT_START || currentTime < SHIFT_END;
 
     // Find next break
     let nextBreak = null;
     let minDiff = Infinity;
 
     for (const breakItem of breaks) {
-      const diff = breakItem.time - currentTime;
+      let targetDate = new Date(now);
+      let diff;
       
-      // Only consider future breaks today
+      if (isInShiftHours) {
+        // In shift hours
+        if (currentTime < breakItem.time) {
+          // Break hasn't happened yet in this shift
+          diff = breakItem.time - currentTime;
+          targetDate.setHours(Math.floor(breakItem.time / 60));
+          targetDate.setMinutes(breakItem.time % 60);
+        } else {
+          // Break already passed in this shift, next one is tomorrow at same time
+          diff = (24 * 60) - currentTime + breakItem.time;
+          targetDate.setDate(targetDate.getDate() + 1);
+          targetDate.setHours(Math.floor(breakItem.time / 60));
+          targetDate.setMinutes(breakItem.time % 60);
+        }
+      } else {
+        // Outside shift hours (6:30 AM - 9:30 PM)
+        // Calculate time until next shift start (9:30 PM)
+        let hoursUntilShift;
+        if (currentTime < SHIFT_START) {
+          hoursUntilShift = SHIFT_START - currentTime;
+        } else {
+          hoursUntilShift = (24 * 60) - currentTime + SHIFT_START;
+        }
+        // Then add time from shift start to break
+        diff = hoursUntilShift + breakItem.time;
+        // Set target to next shift's break time (tomorrow at break time)
+        targetDate.setDate(targetDate.getDate() + 1);
+        targetDate.setHours(Math.floor(breakItem.time / 60));
+        targetDate.setMinutes(breakItem.time % 60);
+      }
+
       if (diff > 0 && diff < minDiff) {
         minDiff = diff;
-        const targetTime = new Date();
-        targetTime.setHours(Math.floor(breakItem.time / 60));
-        targetTime.setMinutes(breakItem.time % 60);
-        targetTime.setSeconds(0);
+        targetDate.setSeconds(0);
+        targetDate.setMilliseconds(0);
         nextBreak = {
           type: breakItem.type,
-          time: targetTime,
+          time: targetDate,
           minutesUntil: diff
         };
       }

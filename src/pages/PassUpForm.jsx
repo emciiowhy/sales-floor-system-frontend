@@ -110,24 +110,24 @@ function PassUpForm() {
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg pb-8">
       {/* Header */}
       <div className="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-2xl mx-auto px-4 py-3">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2 text-sm"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
-          <h1 className="text-xl sm:text-2xl font-bold mb-3">New Pass-Up</h1>
+          <h1 className="text-lg sm:text-xl font-bold mb-2">New Pass-Up</h1>
           <StockTicker />
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <form onSubmit={handleSubmit} className="card space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-4">
+        <form onSubmit={handleSubmit} className="card space-y-4">
           {/* Ticker */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs font-medium mb-1">
               Ticker Symbol
             </label>
             <input
@@ -141,7 +141,7 @@ function PassUpForm() {
 
           {/* Lead Name */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs font-medium mb-1">
               Lead Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -156,7 +156,7 @@ function PassUpForm() {
 
           {/* Interested In */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs font-medium mb-1">
               Interested In
             </label>
             <input
@@ -184,7 +184,7 @@ function PassUpForm() {
 
           {/* Disposition */}
           <div>
-            <label className="block text-sm font-medium mb-3">
+            <label className="block text-xs font-medium mb-2">
               Disposition <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
@@ -207,19 +207,19 @@ function PassUpForm() {
 
           {/* Rebuttals */}
           <div>
-            <label className="block text-sm font-medium mb-3">
+            <label className="block text-xs font-medium mb-2">
               Rebuttals Handled
             </label>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {REBUTTALS.map(({ key, label }) => (
-                <label key={key} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <label key={key} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-dark-bg rounded text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                   <input
                     type="checkbox"
                     checked={rebuttals[key] || false}
                     onChange={(e) => setRebuttals({ ...rebuttals, [key]: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                   />
-                  <span className="text-sm">{label}</span>
+                  <span>{label}</span>
                 </label>
               ))}
             </div>
@@ -227,31 +227,31 @@ function PassUpForm() {
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-xs font-medium mb-1">
               Notes
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="input resize-none text-base"
-              rows={4}
+              className="input resize-none text-sm"
+              rows={2}
               placeholder="Additional notes about the call..."
             />
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <button
               type="submit"
               disabled={submitting || !formData.leadName || !formData.disposition}
-              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1 text-base py-3"
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1 text-sm py-2"
             >
               {submitting ? 'Submitting...' : 'Submit Pass-Up'}
             </button>
             <button
               type="button"
               onClick={handleCopyPreview}
-              className="btn-secondary flex items-center justify-center gap-2 order-1 sm:order-2 text-base py-3 px-3 sm:px-4"
+              className="btn-secondary flex items-center justify-center gap-2 order-1 sm:order-2 text-sm py-2 px-3 sm:px-4"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               <span className="sm:hidden">Copy</span>

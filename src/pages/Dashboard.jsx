@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
 import StockTicker from '../components/StockTicker';
+import BreakSchedule from '../components/BreakSchedule';
 import { formatPassUpForCopy } from '../utils/formatters';
 
 function Dashboard() {
@@ -177,6 +178,9 @@ function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Break Schedule */}
+        <BreakSchedule agentId={agentId} />
 
         {/* Quick Actions */}
         <div className="grid sm:grid-cols-2 gap-4">

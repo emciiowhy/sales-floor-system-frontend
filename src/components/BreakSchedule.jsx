@@ -78,12 +78,16 @@ function BreakSchedule({ agentId }) {
 
   return (
     <div className="card">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <h2 className="text-lg font-bold">Break Schedule</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg shadow-md">
+            <Clock className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+            Break Schedule
+          </h2>
           {alarmTriggered && (
-            <span className="animate-pulse text-red-600 dark:text-red-400">🔔</span>
+            <span className="animate-pulse text-red-600 dark:text-red-400 text-xl">🔔</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -214,9 +218,9 @@ function BreakSchedule({ agentId }) {
 
 function ScheduleItem({ label, time }) {
   return (
-    <div className="p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
-      <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">{label}</div>
-      <div className="text-lg font-semibold">{time}</div>
+    <div className="stat-card p-4 group hover:scale-[1.02] transition-transform">
+      <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">{label}</div>
+      <div className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">{time}</div>
     </div>
   );
 }

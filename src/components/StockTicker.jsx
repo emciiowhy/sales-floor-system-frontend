@@ -27,7 +27,8 @@ function StockTicker({ symbol = 'QTZM' }) {
     };
 
     fetchQuote();
-    const interval = setInterval(fetchQuote, 15000);
+    // Refresh every 30 seconds instead of 15 to reduce API calls
+    const interval = setInterval(fetchQuote, 30000);
     
     return () => clearInterval(interval);
   }, [symbol]);

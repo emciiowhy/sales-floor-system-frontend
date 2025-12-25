@@ -1,188 +1,178 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 
-// Generate buzzer tone using Web Audio API
-function playBuzzerTone(volume = 0.7, duration = 1000) {
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    // Buzzer-like frequency pattern
-    oscillator.type = 'square';
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
-    oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.2);
-
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration / 1000);
-  } catch (error) {
-    console.error('Error playing buzzer tone:', error);
-    // Fallback: Use browser notification sound
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Break Reminder', {
-        body: 'Time for your break!',
-        icon: '/vite.svg'
-      });
-    }
-  }
-}
+// Alarm sound URL - you can replace this with your own sound file
+const ALARM_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
 export function useBreakAlarm(agentId) {
   const [schedule, setSchedule] = useState(null);
   const [nextAlarm, setNextAlarm] = useState(null);
   const [alarmTriggered, setAlarmTriggered] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const audioRef = useRef(null);
   const checkIntervalRef = useRef(null);
-  const lastAlarmRef = useRef({});
 
-  // Load schedule
+  // Initialize audio element
   useEffect(() => {
-    if (!agentId) return;
-
-    const loadSchedule = async () => {
-      try {
-        const data = await api.getBreakSchedule(agentId);
-        setSchedule(data);
-      } catch (error) {
-        console.error('Failed to load break schedule:', error);
-        // Don't show error toast for 404 - schedule will be created on first access
-        if (error.message && !error.message.includes('404')) {
-          console.warn('Break schedule not found, will be created on first update');
-        }
+    audioRef.current = new Audio(ALARM_SOUND_URL);
+    audioRef.current.loop = false;
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
     };
+  }, []);
 
-    loadSchedule();
+  // Load schedule from API
+  const loadSchedule = useCallback(async () => {
+    if (!agentId) {
+      console.error('No agentId provided to useBreakAlarm');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await api.getBreakSchedule(agentId);
+      setSchedule(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load break schedule:', error);
+      toast.error('Failed to load break schedule');
+      setLoading(false);
+    }
   }, [agentId]);
 
-  // Calculate next alarm time
-  useEffect(() => {
+  // Update schedule
+  const updateSchedule = useCallback(async (updates) => {
+    if (!agentId) return;
+
+    try {
+      const data = await api.updateBreakSchedule(agentId, updates);
+      setSchedule(data);
+      return data;
+    } catch (error) {
+      console.error('Failed to update break schedule:', error);
+      throw error;
+    }
+  }, [agentId]);
+
+  // Calculate next alarm
+  const calculateNextAlarm = useCallback(() => {
     if (!schedule || !schedule.alarmEnabled) {
       setNextAlarm(null);
       return;
     }
 
-    const calculateNextAlarm = () => {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
-      const parseTime = (timeStr) => {
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        return new Date(today.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
-      };
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
 
-      const alarms = [
-        { time: parseTime(schedule.firstBreak), type: 'First Break', key: 'firstBreak' },
-        schedule.secondBreak ? { time: parseTime(schedule.secondBreak), type: 'Second Break', key: 'secondBreak' } : null,
-        { time: parseTime(schedule.lunchTime), type: 'Lunch Time', key: 'lunchTime' },
-        { time: parseTime(schedule.endOfShift), type: 'End of Shift', key: 'endOfShift' }
-      ].filter(Boolean);
-
-      // Find next alarm that hasn't passed today
-      const next = alarms
-        .map(alarm => ({
-          ...alarm,
-          time: alarm.time < now ? new Date(alarm.time.getTime() + 24 * 60 * 60 * 1000) : alarm.time
-        }))
-        .sort((a, b) => a.time - b.time)[0];
-
-      setNextAlarm(next);
+    const timeToMinutes = (timeString) => {
+      if (!timeString) return null;
+      const [hours, minutes] = timeString.split(':').map(Number);
+      return hours * 60 + minutes;
     };
 
-    calculateNextAlarm();
-    const interval = setInterval(calculateNextAlarm, 60000); // Recalculate every minute
-    return () => clearInterval(interval);
+    const breaks = [
+      { type: 'First Break', time: timeToMinutes(schedule.firstBreak) },
+      schedule.secondBreak && { type: 'Second Break', time: timeToMinutes(schedule.secondBreak) },
+      { type: 'Lunch', time: timeToMinutes(schedule.lunchTime) },
+      { type: 'End of Shift', time: timeToMinutes(schedule.endOfShift) }
+    ].filter(item => item && item.time !== null);
+
+    // Find next break
+    let nextBreak = null;
+    let minDiff = Infinity;
+
+    for (const breakItem of breaks) {
+      const diff = breakItem.time - currentTime;
+      
+      // Only consider future breaks today
+      if (diff > 0 && diff < minDiff) {
+        minDiff = diff;
+        const targetTime = new Date();
+        targetTime.setHours(Math.floor(breakItem.time / 60));
+        targetTime.setMinutes(breakItem.time % 60);
+        targetTime.setSeconds(0);
+        nextBreak = {
+          type: breakItem.type,
+          time: targetTime,
+          minutesUntil: diff
+        };
+      }
+    }
+
+    setNextAlarm(nextBreak);
   }, [schedule]);
 
-  // Check for alarm time
-  useEffect(() => {
-    if (!nextAlarm || !schedule || !schedule.alarmEnabled) {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
+  // Check if alarm should trigger
+  const checkAlarm = useCallback(() => {
+    if (!nextAlarm || !schedule?.alarmEnabled) return;
+
+    const now = new Date();
+    const diff = nextAlarm.time - now;
+
+    // Trigger alarm if within 1 minute (60000 ms) of break time
+    if (diff <= 60000 && diff >= 0 && !alarmTriggered) {
+      setAlarmTriggered(true);
+      
+      // Play alarm sound
+      if (audioRef.current) {
+        audioRef.current.volume = (schedule.alarmVolume || 70) / 100;
+        audioRef.current.play().catch(error => {
+          console.error('Failed to play alarm sound:', error);
+        });
       }
-      return;
+
+      // Show toast notification
+      toast.info(`Time for ${nextAlarm.type}!`, {
+        duration: 10000,
+        description: 'Your scheduled break is starting now.'
+      });
+
+      // Reset alarm triggered after 2 minutes
+      setTimeout(() => {
+        setAlarmTriggered(false);
+        calculateNextAlarm(); // Recalculate next alarm
+      }, 120000);
     }
+  }, [nextAlarm, schedule, alarmTriggered, calculateNextAlarm]);
 
-    const checkAlarm = () => {
-      const now = new Date();
-      const alarmTime = nextAlarm.time;
-      const timeDiff = alarmTime - now;
+  // Load schedule on mount
+  useEffect(() => {
+    loadSchedule();
+  }, [loadSchedule]);
 
-      // Trigger alarm 1 minute before and at the exact time
-      if (timeDiff <= 60000 && timeDiff >= -60000) {
-        const alarmKey = `${nextAlarm.key}-${alarmTime.toDateString()}`;
-        
-        // Only trigger once per alarm
-        if (!lastAlarmRef.current[alarmKey]) {
-          lastAlarmRef.current[alarmKey] = true;
-          
-          const volume = schedule.alarmVolume / 100;
-          
-          // Play buzzer tone
-          playBuzzerTone(volume, 2000);
-          
-          // Show notification
-          toast.info(`🔔 ${nextAlarm.type}!`, {
-            description: `Time: ${nextAlarm.time.toLocaleTimeString()}`,
-            duration: 5000,
-          });
+  // Calculate next alarm when schedule changes
+  useEffect(() => {
+    if (schedule) {
+      calculateNextAlarm();
+    }
+  }, [schedule, calculateNextAlarm]);
 
-          // Browser notification if permitted
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(`${nextAlarm.type}`, {
-              body: `It's time for your ${nextAlarm.type.toLowerCase()}!`,
-              icon: '/vite.svg',
-              tag: alarmKey
-            });
-          }
-
-          setAlarmTriggered(true);
-          setTimeout(() => setAlarmTriggered(false), 5000);
+  // Check alarm periodically
+  useEffect(() => {
+    if (schedule?.alarmEnabled && nextAlarm) {
+      // Check every 30 seconds
+      checkIntervalRef.current = setInterval(checkAlarm, 30000);
+      // Also check immediately
+      checkAlarm();
+      
+      return () => {
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
         }
-      }
-    };
-
-    // Check every 10 seconds
-    checkIntervalRef.current = setInterval(checkAlarm, 10000);
-    checkAlarm(); // Check immediately
-
-    return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-      }
-    };
-  }, [nextAlarm, schedule]);
-
-  // Request notification permission
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+      };
     }
-  }, []);
+  }, [schedule, nextAlarm, checkAlarm]);
 
   return {
     schedule,
     nextAlarm,
     alarmTriggered,
-    updateSchedule: async (updates) => {
-      try {
-        const updated = await api.updateBreakSchedule(agentId, updates);
-        setSchedule(updated);
-        return updated;
-      } catch (error) {
-        console.error('Failed to update break schedule:', error);
-        throw error;
-      }
-    }
+    loading,
+    loadSchedule,
+    updateSchedule
   };
 }
-

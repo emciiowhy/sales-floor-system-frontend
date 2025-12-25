@@ -32,16 +32,22 @@ function BioBreakTimer({ agentId }) {
   useEffect(() => {
     let interval = null;
     if (isRunning && startTime) {
+      // Update every second for timer display
       interval = setInterval(() => {
         const now = Date.now();
         const elapsedMs = now - startTime;
         const elapsedMinutes = Math.floor(elapsedMs / 1000 / 60);
-        setElapsed(elapsedMinutes);
-
-        // Warn at 12 minutes (3 minutes remaining)
-        if (elapsedMinutes >= 12 && elapsedMinutes < 13) {
-          toast.warning('⚠️ Bio break: 3 minutes remaining in your 15-minute pool!');
-        }
+        setElapsed(prev => {
+          // Only update if changed to prevent unnecessary re-renders
+          if (prev !== elapsedMinutes) {
+            // Warn at 12 minutes (3 minutes remaining)
+            if (elapsedMinutes >= 12 && elapsedMinutes < 13 && prev < 12) {
+              toast.warning('⚠️ Bio break: 3 minutes remaining in your 15-minute pool!');
+            }
+            return elapsedMinutes;
+          }
+          return prev;
+        });
       }, 1000);
     }
     return () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,6 +9,9 @@ import { formatPassUpForCopy } from '../utils/formatters';
 import Logo from '../components/Logo';
 import BreakReminder from '../components/BreakReminder';
 import BioBreakTimer from '../components/BioBreakTimer';
+import BreakTimer from '../components/BreakTimer';
+import LeaderboardSidebar from '../components/LeaderboardSidebar';
+import BreakSchedule from '../components/BreakSchedule';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -41,13 +44,7 @@ function Dashboard() {
   const agentId = localStorage.getItem('agentId');
   const agentName = localStorage.getItem('agentName');
 
-  useEffect(() => {
-    loadDashboard();
-    const interval = setInterval(loadDashboard, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     if (!agentId) {
       toast.error('No agent ID found. Please log in again.');
       navigate('/');
@@ -148,7 +145,14 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [agentId, navigate]);
+
+  useEffect(() => {
+    loadDashboard();
+    // Refresh every 60 seconds to reduce API calls
+    const interval = setInterval(loadDashboard, 60000);
+    return () => clearInterval(interval);
+  }, [loadDashboard]);
 
   const handleLogout = () => {
     localStorage.removeItem('agentId');
@@ -209,28 +213,34 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg pb-20">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <Logo className="w-10 h-10" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-dark-bg dark:via-slate-900 dark:to-dark-bg pb-20">
+      {/* Sticky Header with Glass Effect */}
+      <div className="sticky top-0 z-50 glass-effect border-b border-gray-200/50 dark:border-dark-border/50 shadow-lg backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl blur opacity-20"></div>
+                <Logo className="relative w-12 h-12" />
+              </div>
               <div>
-                <h1 className="text-xl font-bold">{agentName}</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Vici Sales Agent</p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                  {agentName}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Vici Sales Agent</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-110 active:scale-95"
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-blue-600" />}
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Log Out</span>
@@ -238,22 +248,35 @@ function Dashboard() {
             </div>
           </div>
 
-          <StockTicker />
+          <div className="mt-4">
+            <StockTicker />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* Break Reminder */}
-        <BreakReminder />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Break Reminder */}
+            <BreakReminder />
 
-        {/* Bio Break Timer */}
-        <BioBreakTimer agentId={agentId} />
+            {/* Bio Break Timer */}
+            <BioBreakTimer agentId={agentId} />
 
-        {/* Stats Card */}
-        <div className="card">
-            <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
+            {/* Break Timer */}
+            <BreakTimer agentId={agentId} />
+
+            {/* Stats Card */}
+            <div className="card group">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                  Today's Performance
+                </h2>
+                <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+              </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
               <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" />
               <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" />
               <StatBadge label="INT" value={stats.int || 0} color="bg-int" />
@@ -289,152 +312,51 @@ function Dashboard() {
             </div>
           </div>
 
-        {/* Quick Actions */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <button
-            onClick={() => navigate('/passup')}
-            className="card hover:shadow-md transition-shadow cursor-pointer text-left group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg group-hover:scale-110 transition-transform">
-                <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">New Pass-Up</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/leaderboard')}
-            className="card hover:shadow-md transition-shadow cursor-pointer text-left group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg group-hover:scale-110 transition-transform">
-                <TrendingUp className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Leaderboard</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">View rankings</p>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Break Schedule and Targets - Collapsible */}
-        <div className="card">
-          <button
-            onClick={() => setShowBreakSchedule(!showBreakSchedule)}
-            className="w-full flex items-center justify-between mb-4 text-left hover:opacity-80 transition-opacity"
-          >
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-lg font-bold">Break Schedule & Targets</h2>
-            </div>
-            {showBreakSchedule ? (
-              <ChevronUp className="w-5 h-5 text-gray-500" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-500" />
-            )}
-          </button>
-
-          {showBreakSchedule && (
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Employee Break Schedule */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-md font-bold">Employee Break Schedule</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
-                    <span className="font-medium text-sm">Shift Hours:</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">9:30 PM – 6:30 AM</span>
+            {/* Quick Actions */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => navigate('/passup')}
+                className="card-hover group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                    <Plus className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <span className="font-medium text-sm">1st Break:</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">1:00 AM – 1:15 AM</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <span className="font-medium text-sm">2nd Break:</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">3:00 AM – 3:15 AM</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <span className="font-medium text-sm">Lunch Break:</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">5:00 AM – 5:30 AM</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
-                    <span className="font-medium text-sm">End of Shift:</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">6:30 AM</span>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 italic">
-                      Bio break: 15 minutes total per shift, not per break.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Agent Targets */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  <h3 className="text-md font-bold">Agent Targets</h3>
-                </div>
-                <div className="space-y-4">
-                  {/* Daily Targets */}
                   <div>
-                    <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Daily Targets</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                        <span className="text-sm">HOT, WARM, INT:</span>
-                        <span className="text-sm font-semibold">8 total per day</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-dark-bg rounded-lg">
-                        <span className="text-sm">Pass Up Total:</span>
-                        <span className="text-sm font-semibold">10+ per day</span>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                        (WSMSNT, TIHU, HOT, WARM, INT)
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Bonus Targets */}
-                  <div className="pt-3 border-t border-gray-200 dark:border-dark-border">
-                    <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Bonus Targets (10K Bonus)</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                        <span className="text-sm">Daily (HOT, WARM, INT):</span>
-                        <span className="text-sm font-semibold">8 total</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                        <span className="text-sm">Weekly:</span>
-                        <span className="text-sm font-semibold">40</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                        <span className="text-sm">Bi-weekly:</span>
-                        <span className="text-sm font-semibold">60</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                        <span className="text-sm">Monthly:</span>
-                        <span className="text-sm font-semibold">100</span>
-                      </div>
-                    </div>
+                    <h3 className="font-bold text-lg mb-1">New Pass-Up</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
                   </div>
                 </div>
-              </div>
+              </button>
+
+              <button
+                onClick={() => navigate('/leaderboard')}
+                className="card-hover group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="p-4 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                    <TrendingUp className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg mb-1">Full Leaderboard</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">View all rankings</p>
+                  </div>
+                </div>
+              </button>
             </div>
-          )}
-        </div>
 
         {/* Script Card */}
         <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-lg font-bold">Sales Script</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-md">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                Sales Script
+              </h2>
             </div>
             <div className="flex items-center gap-2">
               {editingScript ? (
@@ -442,7 +364,7 @@ function Dashboard() {
                   <button
                     onClick={handleSaveScript}
                     disabled={savingScript}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
                     <span>{savingScript ? 'Saving...' : 'Save'}</span>
@@ -450,7 +372,7 @@ function Dashboard() {
                   <button
                     onClick={handleCancelEdit}
                     disabled={savingScript}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                    className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
                   >
                     <X className="w-4 h-4" />
                     <span>Cancel</span>
@@ -460,7 +382,7 @@ function Dashboard() {
                 <>
                   <button
                     onClick={handleEditScript}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    className="btn-secondary flex items-center gap-2 text-sm"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Edit</span>
@@ -468,7 +390,7 @@ function Dashboard() {
                   {customScript && (
                     <button
                       onClick={handleCopyScript}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                      className="btn-secondary flex items-center gap-2 text-sm"
                     >
                       {scriptCopied ? (
                         <>
@@ -491,23 +413,24 @@ function Dashboard() {
             <textarea
               value={editedScript}
               onChange={(e) => setEditedScript(e.target.value)}
-              className="w-full input resize-none font-mono text-xs"
+              className="w-full input resize-none font-mono text-sm"
               rows={20}
               disabled={savingScript}
               placeholder="Enter your sales script here..."
             />
           ) : customScript ? (
-            <div className="bg-gray-50 dark:bg-dark-bg rounded-lg p-4 border border-gray-200 dark:border-dark-border">
-              <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800 dark:text-gray-200 overflow-x-auto">
+            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-inner">
+              <pre className="whitespace-pre-wrap font-mono text-sm text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed">
                 {customScript}
               </pre>
             </div>
           ) : (
-            <div className="bg-gray-50 dark:bg-dark-bg rounded-lg p-4 border border-gray-200 dark:border-dark-border text-center">
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">No script saved yet</p>
+            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl p-12 border-2 border-dashed border-gray-300 dark:border-dark-border text-center">
+              <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 font-medium">No script saved yet</p>
               <button
                 onClick={handleEditScript}
-                className="btn-primary text-sm"
+                className="btn-primary"
               >
                 Add Script
               </button>
@@ -515,69 +438,164 @@ function Dashboard() {
           )}
         </div>
 
-        {/* Recent Pass-Ups */}
-        {recentPassUps.length > 0 && (
-          <div className="card">
-            <h2 className="text-lg font-bold mb-4">Recent Pass-Ups</h2>
-            <div className="space-y-2">
-              {recentPassUps.map((passUp) => (
-                <div
-                  key={passUp.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">{passUp.leadName}</span>
-                      <DispositionBadge disposition={passUp.disposition} />
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {new Date(passUp.date).toLocaleString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleCopy(passUp)}
-                    className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                  >
-                    {copiedId === passUp.id ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
+            {/* Recent Pass-Ups */}
+            {recentPassUps.length > 0 && (
+              <div className="card">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                    Recent Pass-Ups
+                  </h2>
+                  <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
                 </div>
-              ))}
+                <div className="space-y-3">
+                  {recentPassUps.map((passUp) => (
+                    <div
+                      key={passUp.id}
+                      className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl border border-gray-200 dark:border-dark-border hover:shadow-md hover:scale-[1.01] transition-all duration-200 group"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">{passUp.leadName}</span>
+                          <DispositionBadge disposition={passUp.disposition} />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                          {new Date(passUp.date).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(passUp)}
+                        className="p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm"
+                        title="Copy to clipboard"
+                      >
+                        {copiedId === passUp.id ? (
+                          <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Leaderboard Sidebar */}
+            <LeaderboardSidebar period="daily" limit={5} />
+
+            {/* Break Schedule & Targets */}
+            <div className="card">
+              <button
+                onClick={() => setShowBreakSchedule(!showBreakSchedule)}
+                className="w-full flex items-center justify-between mb-6 text-left hover:opacity-80 transition-all duration-200 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg shadow-md group-hover:scale-110 transition-transform">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                    Break Schedule & Targets
+                  </h2>
+                </div>
+                {showBreakSchedule ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors" />
+                )}
+              </button>
+
+              {showBreakSchedule && (
+                <div className="space-y-4">
+                  {/* Break Schedule Component */}
+                  <BreakSchedule agentId={agentId} />
+
+                  {/* Agent Targets */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-dark-border">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      <h3 className="text-md font-bold">Agent Targets</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {/* Daily Targets */}
+                      <div>
+                        <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Daily Targets</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                            <span className="text-sm">HOT, WARM, INT:</span>
+                            <span className="text-sm font-semibold">8 total per day</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                            <span className="text-sm">Pass Up Total:</span>
+                            <span className="text-sm font-semibold">10+ per day</span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                            (WSMSNT, TIHU, HOT, WARM, INT)
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Bonus Targets */}
+                      <div className="pt-3 border-t border-gray-200 dark:border-dark-border">
+                        <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Bonus Targets (10K Bonus)</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <span className="text-sm">Daily (HOT, WARM, INT):</span>
+                            <span className="text-sm font-semibold">8 total</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <span className="text-sm">Weekly:</span>
+                            <span className="text-sm font-semibold">40</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <span className="text-sm">Bi-weekly:</span>
+                            <span className="text-sm font-semibold">60</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <span className="text-sm">Monthly:</span>
+                            <span className="text-sm font-semibold">100</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-function StatBadge({ label, value, color }) {
+const StatBadge = memo(function StatBadge({ label, value, color }) {
   return (
-    <div className="text-center p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
-      <div className={`w-3 h-3 ${color} rounded-full mx-auto mb-1`}></div>
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs text-gray-600 dark:text-gray-400">{label}</div>
+    <div className="stat-card text-center group hover:scale-105 transition-transform duration-200">
+      <div className={`w-4 h-4 ${color} rounded-full mx-auto mb-2 shadow-sm group-hover:shadow-md transition-shadow`}></div>
+      <div className="text-3xl font-bold mb-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+        {value}
+      </div>
+      <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">{label}</div>
     </div>
   );
-}
+});
 
-function DispositionBadge({ disposition }) {
-  const colors = {
-    HOT: 'bg-hot text-white',
-    WARM: 'bg-warm text-white',
-    INT: 'bg-int text-white',
-    TIHU: 'bg-tihu text-white',
-    WSMSNT: 'bg-wsmsnt text-white'
-  };
+const DispositionBadge = memo(function DispositionBadge({ disposition }) {
+  const colors = useMemo(() => ({
+    HOT: 'bg-hot text-white shadow-sm',
+    WARM: 'bg-warm text-white shadow-sm',
+    INT: 'bg-int text-white shadow-sm',
+    TIHU: 'bg-tihu text-white shadow-sm',
+    WSMSNT: 'bg-wsmsnt text-white shadow-sm'
+  }), []);
 
   return (
-    <span className={`text-xs px-2 py-1 rounded font-medium ${colors[disposition]}`}>
+    <span className={`badge ${colors[disposition] || 'bg-gray-500 text-white'} font-semibold`}>
       {disposition}
     </span>
   );
-}
+});
 
 export default Dashboard;

@@ -13,11 +13,21 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  html {
+    /* Better text rendering and prevent zoom on mobile when focused */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-dark-bg dark:via-slate-900 dark:to-dark-bg;
     @apply text-gray-900 dark:text-gray-100;
     @apply antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent text selection flickering on mobile */
+    -webkit-user-select: text;
+    -webkit-touch-callout: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -27,17 +37,19 @@
 
 @layer components {
   .btn-primary {
-    @apply px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl;
+    @apply px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm sm:text-base;
     @apply hover:from-blue-700 hover:to-blue-800;
     @apply shadow-md hover:shadow-lg;
     @apply transform hover:scale-[1.02] active:scale-[0.98];
     @apply transition-transform duration-150 ease-out;
     @apply font-medium;
     @apply will-change-transform;
+    /* Ensure minimum touch target size on mobile */
+    min-height: 44px;
   }
   
   .btn-secondary {
-    @apply px-5 py-2.5 bg-white dark:bg-dark-card text-gray-900 dark:text-gray-100 rounded-xl;
+    @apply px-4 sm:px-5 py-2.5 sm:py-3 bg-white dark:bg-dark-card text-gray-900 dark:text-gray-100 rounded-xl text-sm sm:text-base;
     @apply hover:bg-gray-50 dark:hover:bg-slate-700;
     @apply border border-gray-200 dark:border-dark-border;
     @apply shadow-sm hover:shadow-md;
@@ -45,13 +57,14 @@
     @apply transition-transform duration-150 ease-out;
     @apply font-medium;
     @apply will-change-transform;
+    min-height: 44px;
   }
   
   .card {
     @apply bg-white dark:bg-dark-card rounded-2xl;
     @apply shadow-sm hover:shadow-md;
     @apply border border-gray-100 dark:border-dark-border;
-    @apply p-6;
+    @apply p-4 sm:p-6;
     @apply transition-shadow duration-200 ease-out;
     @apply backdrop-blur-sm;
     @apply bg-opacity-90 dark:bg-opacity-90;
@@ -65,17 +78,20 @@
   }
   
   .input {
-    @apply w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-xl;
+    @apply w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 dark:border-dark-border rounded-xl;
     @apply bg-white dark:bg-dark-bg;
-    @apply text-gray-900 dark:text-gray-100;
+    @apply text-gray-900 dark:text-gray-100 text-base;
     @apply focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500;
     @apply transition-all duration-200;
     @apply placeholder:text-gray-400 dark:placeholder:text-gray-500;
+    /* Prevent iOS from zooming on focus */
+    font-size: 16px;
+    min-height: 44px;
   }
 
   .stat-card {
     @apply bg-gradient-to-br from-white to-gray-50 dark:from-dark-card dark:to-slate-800;
-    @apply rounded-xl p-4;
+    @apply rounded-xl p-3 sm:p-4;
     @apply border border-gray-100 dark:border-dark-border;
     @apply shadow-sm hover:shadow-md;
     @apply transition-transform duration-200 ease-out;
@@ -94,5 +110,42 @@
   .glass-effect {
     @apply bg-white/80 dark:bg-dark-card/80 backdrop-blur-md;
     @apply border border-white/20 dark:border-dark-border/50;
+  }
+
+  /* Mobile-friendly touch targets - ensure interactive elements are easy to tap */
+  button, 
+  a, 
+  [role="button"] {
+    @apply touch-manipulation;
+  }
+  
+  /* Minimum touch target size for mobile - 44x44px is recommended */
+  @media (max-width: 640px) {
+    button, 
+    a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Adjust icon-only buttons for smaller touch targets */
+    button.icon-only,
+    a.icon-only {
+      min-height: 36px;
+      min-width: 36px;
+    }
+  }
+
+  /* Better text rendering on mobile */
+  @media (max-width: 640px) {
+    input, 
+    textarea, 
+    select {
+      font-size: 16px;
+      /* Prevent iOS zoom on focus */
+    }
+    
+    body {
+      font-size: 16px;
+    }
   }
 }

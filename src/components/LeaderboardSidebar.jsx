@@ -75,7 +75,7 @@ function LeaderboardSidebar({ period = 'daily', limit = 5 }) {
           <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg shadow-md">
             <TrendingUp className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
             Leaderboard
           </h2>
         </div>
@@ -107,19 +107,19 @@ function LeaderboardSidebar({ period = 'daily', limit = 5 }) {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="badge bg-hot/10 text-hot border-hot/20">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="badge bg-hot/10 text-hot border-hot/20 text-xs">
                   {agent.hot}
                 </span>
-                <span className="badge bg-warm/10 text-warm border-warm/20">
+                <span className="badge bg-warm/10 text-warm border-warm/20 text-xs">
                   {agent.warm}
                 </span>
-                <span className="badge bg-int/10 text-int border-int/20">
+                <span className="badge bg-int/10 text-int border-int/20 text-xs">
                   {agent.int}
                 </span>
               </div>
-              <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
+              <span className="font-bold text-base sm:text-lg text-gray-900 dark:text-gray-100">
                 {agent.productive}
               </span>
             </div>

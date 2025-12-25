@@ -7,7 +7,7 @@ import { useBreakAlarm } from '../hooks/useBreakAlarm';
 function BreakTimer({ agentId }) {
   const { schedule } = useBreakAlarm(agentId);
   const [activeBreak, setActiveBreak] = useState(null);
-  const [elapsed, setElapsed] = useState(0);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [nextBreak, setNextBreak] = useState(null);
   const [timeUntilNext, setTimeUntilNext] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -86,23 +86,16 @@ function BreakTimer({ agentId }) {
   }, [agentId]);
 
   useEffect(() => {
-    if (activeBreak) {
-      // Update timer every second for smooth display
-      const interval = setInterval(() => {
-        const now = Date.now();
-        const startTime = new Date(activeBreak.startTime).getTime();
-        const elapsedMs = now - startTime;
-        const elapsedMinutes = Math.floor(elapsedMs / 1000 / 60);
-        const elapsedSeconds = Math.floor((elapsedMs / 1000) % 60);
-        setElapsed(elapsedMinutes * 60 + elapsedSeconds);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setElapsed(0);
-      if (schedule && schedule.firstBreak) {
-        calculateNextBreak();
-      }
+    // Update current time every second for PC time sync
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    if (!activeBreak && schedule && schedule.firstBreak) {
+      calculateNextBreak();
     }
+    
+    return () => clearInterval(interval);
   }, [activeBreak, schedule, calculateNextBreak]);
 
   useEffect(() => {
@@ -133,12 +126,6 @@ function BreakTimer({ agentId }) {
       }
       setLoading(false);
     }
-  };
-
-  const formatTime = (totalSeconds) => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   const formatTimeUntil = (minutes) => {
@@ -205,17 +192,17 @@ function BreakTimer({ agentId }) {
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               {getBreakLabel(activeBreak.type)}
             </div>
-            <div className="text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2">
-              {formatTime(elapsed)}
+            <div className="text-2xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2">
+              {currentTime.toLocaleTimeString()}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Elapsed time
+              Current time
             </div>
           </div>
 
           <button
             onClick={handleEndBreak}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-2 px-3 py-3 sm:px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm sm:text-base"
           >
             <Square className="w-5 h-5" />
             <span>End Break</span>
@@ -233,7 +220,7 @@ function BreakTimer({ agentId }) {
                     Next: {getBreakLabel(nextBreak.type)}
                   </span>
                 </div>
-                <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                <div className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200">
                   {formatTimeUntil(timeUntilNext)}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -250,25 +237,25 @@ function BreakTimer({ agentId }) {
                 {schedule.firstBreak && (
                   <button
                     onClick={() => handleStartBreak('FIRST')}
-                    className="px-3 py-2 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                    className="px-2 py-2.5 text-xs sm:text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium hover:scale-105 active:scale-95"
                   >
-                    Start 1st
+                    1st
                   </button>
                 )}
                 {schedule.secondBreak && (
                   <button
                     onClick={() => handleStartBreak('SECOND')}
-                    className="px-3 py-2 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                    className="px-2 py-2.5 text-xs sm:text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors font-medium hover:scale-105 active:scale-95"
                   >
-                    Start 2nd
+                    2nd
                   </button>
                 )}
                 {schedule.lunchTime && (
                   <button
                     onClick={() => handleStartBreak('LUNCH')}
-                    className="px-3 py-2 text-sm bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors"
+                    className="px-2 py-2.5 text-xs sm:text-sm bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors font-medium hover:scale-105 active:scale-95"
                   >
-                    Start Lunch
+                    Lunch
                   </button>
                 )}
               </div>

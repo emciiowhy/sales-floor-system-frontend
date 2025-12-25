@@ -216,33 +216,33 @@ function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-dark-bg dark:via-slate-900 dark:to-dark-bg pb-20">
       {/* Sticky Header with Glass Effect */}
       <div className="sticky top-0 z-50 glass-effect border-b border-gray-200/50 dark:border-dark-border/50 shadow-lg backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <div className="relative flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl blur opacity-20"></div>
-                <Logo className="relative w-12 h-12" />
+                <Logo className="relative w-10 h-10 sm:w-12 sm:h-12" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent truncate">
                   {agentName}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Vici Sales Agent</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">Vici Sales Agent</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className="p-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-110 active:scale-95"
+                className="p-2.5 sm:p-3 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-110 active:scale-95 min-h-11 min-w-11"
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-blue-600" />}
+                {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />}
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
+                className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm min-h-11"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Log Out</span>
               </button>
             </div>
@@ -270,13 +270,13 @@ function Dashboard() {
             {/* Stats Card */}
             <div className="card group">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                   Today's Performance
                 </h2>
                 <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
               </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6">
               <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" />
               <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" />
               <StatBadge label="INT" value={stats.int || 0} color="bg-int" />
@@ -313,19 +313,19 @@ function Dashboard() {
           </div>
 
             {/* Quick Actions */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={() => navigate('/passup')}
                 className="card-hover group relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                    <Plus className="w-6 h-6 text-white" />
+                <div className="relative flex items-center gap-3 sm:gap-4">
+                  <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">New Pass-Up</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-base sm:text-lg mb-1">New Pass-Up</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
                   </div>
                 </div>
               </button>
@@ -335,13 +335,13 @@ function Dashboard() {
                 className="card-hover group relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center gap-4">
-                  <div className="p-4 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                    <TrendingUp className="w-6 h-6 text-white" />
+                <div className="relative flex items-center gap-3 sm:gap-4">
+                  <div className="p-3 sm:p-4 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">Full Leaderboard</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">View all rankings</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-base sm:text-lg mb-1">Full Leaderboard</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">View all rankings</p>
                   </div>
                 </div>
               </button>
@@ -354,17 +354,17 @@ function Dashboard() {
               <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-md">
                 <FileText className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                 Sales Script
               </h2>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               {editingScript ? (
                 <>
                   <button
                     onClick={handleSaveScript}
                     disabled={savingScript}
-                    className="btn-primary flex items-center gap-2 text-sm disabled:opacity-50"
+                    className="btn-primary flex items-center gap-2 text-xs sm:text-sm disabled:opacity-50 py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
                   >
                     <Save className="w-4 h-4" />
                     <span>{savingScript ? 'Saving...' : 'Save'}</span>
@@ -372,7 +372,7 @@ function Dashboard() {
                   <button
                     onClick={handleCancelEdit}
                     disabled={savingScript}
-                    className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-50"
+                    className="btn-secondary flex items-center gap-2 text-xs sm:text-sm disabled:opacity-50 py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
                   >
                     <X className="w-4 h-4" />
                     <span>Cancel</span>
@@ -382,25 +382,25 @@ function Dashboard() {
                 <>
                   <button
                     onClick={handleEditScript}
-                    className="btn-secondary flex items-center gap-2 text-sm"
+                    className="btn-secondary flex items-center gap-2 text-xs sm:text-sm py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
                   >
                     <Edit2 className="w-4 h-4" />
-                    <span>Edit</span>
+                    <span className="hidden sm:inline">Edit</span>
                   </button>
                   {customScript && (
                     <button
                       onClick={handleCopyScript}
-                      className="btn-secondary flex items-center gap-2 text-sm"
+                      className="btn-secondary flex items-center gap-2 text-xs sm:text-sm py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
                     >
                       {scriptCopied ? (
                         <>
                           <Check className="w-4 h-4 text-green-600" />
-                          <span>Copied!</span>
+                          <span className="hidden sm:inline">Copied!</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-4 h-4" />
-                          <span>Copy</span>
+                          <span className="hidden sm:inline">Copy</span>
                         </>
                       )}
                     </button>
@@ -414,7 +414,7 @@ function Dashboard() {
               value={editedScript}
               onChange={(e) => setEditedScript(e.target.value)}
               className="w-full input resize-none font-mono text-sm"
-              rows={20}
+              rows={15}
               disabled={savingScript}
               placeholder="Enter your sales script here..."
             />
@@ -442,7 +442,7 @@ function Dashboard() {
             {recentPassUps.length > 0 && (
               <div className="card">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                  <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                     Recent Pass-Ups
                   </h2>
                   <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
@@ -451,11 +451,11 @@ function Dashboard() {
                   {recentPassUps.map((passUp) => (
                     <div
                       key={passUp.id}
-                      className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl border border-gray-200 dark:border-dark-border hover:shadow-md hover:scale-[1.01] transition-all duration-200 group"
+                      className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl border border-gray-200 dark:border-dark-border hover:shadow-md hover:scale-[1.01] transition-all duration-200 group"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="font-semibold text-gray-900 dark:text-gray-100">{passUp.leadName}</span>
+                      <div className="flex-1 min-w-0 mr-3">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                          <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{passUp.leadName}</span>
                           <DispositionBadge disposition={passUp.disposition} />
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
@@ -464,7 +464,7 @@ function Dashboard() {
                       </div>
                       <button
                         onClick={() => handleCopy(passUp)}
-                        className="p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm"
+                        className="p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm flex-shrink-0"
                         title="Copy to clipboard"
                       >
                         {copiedId === passUp.id ? (
@@ -481,7 +481,7 @@ function Dashboard() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="lg:col-span-1 space-y-6">
             {/* Leaderboard Sidebar */}
             <LeaderboardSidebar period="daily" limit={5} />
 
@@ -495,7 +495,7 @@ function Dashboard() {
                   <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg shadow-md group-hover:scale-110 transition-transform">
                     <Clock className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                  <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
                     Break Schedule & Targets
                   </h2>
                 </div>
@@ -574,7 +574,7 @@ const StatBadge = memo(function StatBadge({ label, value, color }) {
   return (
     <div className="stat-card text-center group hover:scale-105 transition-transform duration-200">
       <div className={`w-4 h-4 ${color} rounded-full mx-auto mb-2 shadow-sm group-hover:shadow-md transition-shadow`}></div>
-      <div className="text-3xl font-bold mb-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+      <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
         {value}
       </div>
       <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">{label}</div>

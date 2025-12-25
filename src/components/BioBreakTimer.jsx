@@ -125,7 +125,7 @@ function BioBreakTimer({ agentId }) {
         {/* Timer Display */}
         {isRunning && (
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+            <p className="text-2xl sm:text-3xl font-bold text-green-700 dark:text-green-300">
               {String(Math.floor(elapsed / 60)).padStart(2, '0')}:
               {String(elapsed % 60).padStart(2, '0')}
             </p>
@@ -139,7 +139,7 @@ function BioBreakTimer({ agentId }) {
             <button
               onClick={handleStart}
               disabled={remaining <= 0}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium"
             >
               <Play className="w-4 h-4" />
               <span>Start Bio Break</span>
@@ -147,7 +147,7 @@ function BioBreakTimer({ agentId }) {
           ) : (
             <button
               onClick={handleStop}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base font-medium"
             >
               <Square className="w-4 h-4" />
               <span>End Bio Break</span>

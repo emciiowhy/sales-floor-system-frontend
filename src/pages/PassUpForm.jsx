@@ -118,7 +118,7 @@ function PassUpForm() {
             <ArrowLeft className="w-5 h-5" />
             Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold mb-3">New Pass-Up</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-3">New Pass-Up</h1>
           <StockTicker />
         </div>
       </div>
@@ -187,13 +187,13 @@ function PassUpForm() {
             <label className="block text-sm font-medium mb-3">
               Disposition <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
               {DISPOSITIONS.map(({ value, label, color }) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setFormData({ ...formData, disposition: value })}
-                  className={`py-3 px-4 rounded-lg font-semibold text-white transition-all ${
+                  className={`py-3 px-2 sm:px-4 rounded-lg font-semibold text-white text-sm sm:text-base min-h-12 transition-all ${
                     formData.disposition === value
                       ? `${color} ring-4 ring-offset-2 ring-blue-500 dark:ring-offset-dark-bg scale-105`
                       : `${color} opacity-60 hover:opacity-100`
@@ -233,28 +233,29 @@ function PassUpForm() {
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="input resize-none"
+              className="input resize-none text-base"
               rows={4}
               placeholder="Additional notes about the call..."
             />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4">
             <button
               type="submit"
               disabled={submitting || !formData.leadName || !formData.disposition}
-              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1 text-base py-3"
             >
               {submitting ? 'Submitting...' : 'Submit Pass-Up'}
             </button>
             <button
               type="button"
               onClick={handleCopyPreview}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-secondary flex items-center justify-center gap-2 order-1 sm:order-2 text-base py-3 px-3 sm:px-4"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              Copy Preview
+              <span className="sm:hidden">Copy</span>
+              <span className="hidden sm:inline">Copy Preview</span>
             </button>
           </div>
         </form>

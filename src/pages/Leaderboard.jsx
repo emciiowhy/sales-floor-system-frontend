@@ -46,27 +46,27 @@ function Leaderboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg pb-8">
       {/* Header */}
       <div className="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4 min-h-11 px-2"
           >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Dashboard
+            <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm sm:text-base">Back to Dashboard</span>
           </button>
           
           <div className="flex items-center gap-3 mb-4">
-            <TrendingUp className="w-8 h-8 text-blue-600" />
-            <h1 className="text-2xl font-bold">Leaderboard</h1>
+            <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Leaderboard</h1>
           </div>
 
           {/* Period Tabs */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto">
             {PERIODS.map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setPeriod(value)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base transition-colors whitespace-nowrap min-h-11 ${
                   period === value
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 dark:bg-dark-bg text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -79,7 +79,7 @@ function Leaderboard() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {loading ? (
           <div className="card text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>

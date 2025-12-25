@@ -83,7 +83,7 @@ function BreakSchedule({ agentId }) {
           <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg shadow-md">
             <Clock className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
             Break Schedule
           </h2>
           {alarmTriggered && (
@@ -134,7 +134,7 @@ function BreakSchedule({ agentId }) {
 
       {editing ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">First Break</label>
               <input
@@ -188,7 +188,7 @@ function BreakSchedule({ agentId }) {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3">
             <ScheduleItem label="First Break" time={schedule.firstBreak} />
             {schedule.secondBreak && (
               <ScheduleItem label="Second Break" time={schedule.secondBreak} />

@@ -46,10 +46,10 @@ function AgentSetup() {
           <div className="flex justify-center mb-4">
             <Logo className="w-20 h-20" />
           </div>
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Vici Sales
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Agent Pass UP Tracker
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">Enter your name to get started</p>
+          <p className="text-gray-600 dark:text-gray-400">Enter your name to get started! (ex. Rocky Knox) </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,7 +61,7 @@ function AgentSetup() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Smith"
+              placeholder=""
               className="input"
               disabled={loading}
               autoFocus
@@ -73,7 +73,7 @@ function AgentSetup() {
             disabled={loading || !name.trim()}
             className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Setting up...' : 'Start Working'}
+            {loading ? 'Setting up...' : 'Lets GO!'}
           </button>
         </form>
 

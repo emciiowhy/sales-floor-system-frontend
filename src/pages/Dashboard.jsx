@@ -255,99 +255,89 @@ function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Break Reminder */}
-            <BreakReminder />
-
-            {/* Bio Break Timer */}
-            <BioBreakTimer agentId={agentId} />
-
-            {/* Break Timer */}
-            <BreakTimer agentId={agentId} />
-
-            {/* Stats Card */}
-            <div className="card group">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-                  Today's Performance
-                </h2>
-                <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-              </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6">
-              <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" />
-              <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" />
-              <StatBadge label="INT" value={stats.int || 0} color="bg-int" />
-              <StatBadge label="TIHU" value={stats.tihu || 0} color="bg-tihu" />
-              <StatBadge label="WSMSNT" value={stats.wsmsnt || 0} color="bg-wsmsnt" />
+        <div className="space-y-6 lg:space-y-8">
+          {/* Section 1: Today's Performance - Full Width */}
+          <div className="card group">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+                Today's Performance
+              </h2>
+              <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
             </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">Productive Pass-Ups</span>
-                <span className="text-gray-600 dark:text-gray-400">
-                  {stats.targetProgress?.productive || 0} / {stats.targetProgress?.productiveGoal || 0}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div 
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(stats.targetProgress?.productivePercent || 0, 100)}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0) > 0 
-                  ? `${(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0)} more to reach target`
-                  : '🎉 Target reached!'}
-              </p>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Total Pass-Ups Today</span>
-                <span className="text-2xl font-bold">{stats.total || 0}</span>
-              </div>
-            </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6">
+            <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" />
+            <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" />
+            <StatBadge label="INT" value={stats.int || 0} color="bg-int" />
+            <StatBadge label="TIHU" value={stats.tihu || 0} color="bg-tihu" />
+            <StatBadge label="WSMSNT" value={stats.wsmsnt || 0} color="bg-wsmsnt" />
           </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                onClick={() => navigate('/passup')}
-                className="card-hover group relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center gap-3 sm:gap-4">
-                  <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
-                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base sm:text-lg mb-1">New Pass-Up</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => navigate('/leaderboard')}
-                className="card-hover group relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center gap-3 sm:gap-4">
-                  <div className="p-3 sm:p-4 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
-                    <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base sm:text-lg mb-1">Full Leaderboard</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">View all rankings</p>
-                  </div>
-                </div>
-              </button>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">Productive Pass-Ups</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                {stats.targetProgress?.productive || 0} / {stats.targetProgress?.productiveGoal || 0}
+              </span>
             </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div 
+                className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(stats.targetProgress?.productivePercent || 0, 100)}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0) > 0 
+                ? `${(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0)} more to reach target`
+                : '🎉 Target reached!'}
+            </p>
+          </div>
 
-        {/* Script Card */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Total Pass-Ups Today</span>
+              <span className="text-2xl font-bold">{stats.total || 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Quick Actions (New Pass-Up & Leaderboard) - Two Columns */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+          <button
+            onClick={() => navigate('/passup')}
+            className="card-hover group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative flex items-center gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-base sm:text-lg mb-1">New Pass-Up</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/leaderboard')}
+            className="card-hover group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative flex items-center gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-base sm:text-lg mb-1">Full Leaderboard</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">View all rankings</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+
+        {/* Section 3: Sales Script - Full Width */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -438,132 +428,29 @@ function Dashboard() {
           )}
         </div>
 
-            {/* Recent Pass-Ups */}
-            {recentPassUps.length > 0 && (
-              <div className="card">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-                    Recent Pass-Ups
-                  </h2>
-                  <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-                </div>
-                <div className="space-y-3">
-                  {recentPassUps.map((passUp) => (
-                    <div
-                      key={passUp.id}
-                      className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl border border-gray-200 dark:border-dark-border hover:shadow-md hover:scale-[1.01] transition-all duration-200 group"
-                    >
-                      <div className="flex-1 min-w-0 mr-3">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
-                          <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{passUp.leadName}</span>
-                          <DispositionBadge disposition={passUp.disposition} />
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                          {new Date(passUp.date).toLocaleString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleCopy(passUp)}
-                        className="p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm flex-shrink-0"
-                        title="Copy to clipboard"
-                      >
-                        {copiedId === passUp.id ? (
-                          <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        )}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Section 4: Bio Break Timer & Break Timer - Two Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <BioBreakTimer agentId={agentId} />
+          <BreakTimer agentId={agentId} />
+        </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Leaderboard Sidebar */}
-            <LeaderboardSidebar period="daily" limit={5} />
-
-            {/* Break Schedule & Targets */}
-            <div className="card">
-              <button
-                onClick={() => setShowBreakSchedule(!showBreakSchedule)}
-                className="w-full flex items-center justify-between mb-6 text-left hover:opacity-80 transition-all duration-200 group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg shadow-md group-hover:scale-110 transition-transform">
-                    <Clock className="w-5 h-5 text-white" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-                    Break Schedule & Targets
-                  </h2>
-                </div>
-                {showBreakSchedule ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors" />
-                )}
-              </button>
-
-              {showBreakSchedule && (
-                <div className="space-y-4">
-                  {/* Break Schedule Component */}
-                  <BreakSchedule agentId={agentId} />
-
-                  {/* Agent Targets */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-dark-border">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      <h3 className="text-md font-bold">Agent Targets</h3>
-                    </div>
-                    <div className="space-y-4">
-                      {/* Daily Targets */}
-                      <div>
-                        <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Daily Targets</h3>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                            <span className="text-sm">HOT, WARM, INT:</span>
-                            <span className="text-sm font-semibold">8 total per day</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-dark-bg rounded-lg">
-                            <span className="text-sm">Pass Up Total:</span>
-                            <span className="text-sm font-semibold">10+ per day</span>
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                            (WSMSNT, TIHU, HOT, WARM, INT)
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Bonus Targets */}
-                      <div className="pt-3 border-t border-gray-200 dark:border-dark-border">
-                        <h3 className="font-semibold text-sm mb-3 text-gray-700 dark:text-gray-300">Bonus Targets (10K Bonus)</h3>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                            <span className="text-sm">Daily (HOT, WARM, INT):</span>
-                            <span className="text-sm font-semibold">8 total</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                            <span className="text-sm">Weekly:</span>
-                            <span className="text-sm font-semibold">40</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                            <span className="text-sm">Bi-weekly:</span>
-                            <span className="text-sm font-semibold">60</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                            <span className="text-sm">Monthly:</span>
-                            <span className="text-sm font-semibold">100</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+        {/* Section 5: Disclaimer - Full Width at Bottom */}
+        <div className="card border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-950/30">
+          <div className="flex items-start gap-4">
+            <div className="text-3xl flex-shrink-0">⚠️</div>
+            <div>
+              <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-2">
+                EXCLUSIVE TO VICI DIALERS - CONFIDENTIAL
+              </h3>
+              <p className="text-red-700 dark:text-red-300 font-semibold mb-2">
+                DO NOT SHARE THIS WEBSITE. This platform is exclusive to VICI Dialers work-from-home agents only.
+              </p>
+              <p className="text-red-600 dark:text-red-400 font-bold">
+                ⛔ FAILURE TO COMPLY WILL RESULT IN PUNISHMENT
+              </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -13,7 +13,21 @@ import BioBreakTimer from '../components/BioBreakTimer';
 function Dashboard() {
   const navigate = useNavigate();
   const { darkMode, setDarkMode } = useDarkMode();
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    hot: 0,
+    warm: 0,
+    int: 0,
+    tihu: 0,
+    wsmsnt: 0,
+    total: 0,
+    targetProgress: {
+      productive: 0,
+      productiveGoal: 8,
+      productivePercent: 0,
+      totalGoal: 10,
+      totalPercent: 0
+    }
+  });
   const [recentPassUps, setRecentPassUps] = useState([]);
   const [customScript, setCustomScript] = useState('');
   const [editingScript, setEditingScript] = useState(false);
@@ -34,21 +48,72 @@ function Dashboard() {
   }, []);
 
   const loadDashboard = async () => {
+    if (!agentId) {
+      toast.error('No agent ID found. Please log in again.');
+      navigate('/');
+      return;
+    }
+
     try {
-      const [statsData, passUpsData, agentData] = await Promise.all([
+      // Check if agent exists first
+      let agentData;
+      try {
+        agentData = await api.getAgent(agentId);
+      } catch (agentError) {
+        if (agentError.message?.includes('404') || agentError.message?.includes('not found')) {
+          toast.error('Agent not found. Please log in again.');
+          localStorage.removeItem('agentId');
+          localStorage.removeItem('agentName');
+          navigate('/');
+          return;
+        }
+        throw agentError;
+      }
+
+      // Load stats and pass-ups in parallel
+      const [statsData, passUpsData] = await Promise.allSettled([
         api.getAgentStats(agentId, 'daily'),
-        api.getAgentPassUps(agentId, { limit: 5 }),
-        api.getAgent(agentId)
+        api.getAgentPassUps(agentId, { limit: 5 })
       ]);
-      setStats(statsData);
-      setRecentPassUps(passUpsData || []);
+
+      // Handle stats
+      if (statsData.status === 'fulfilled' && statsData.value) {
+        setStats(statsData.value);
+      } else {
+        console.warn('Failed to load stats:', statsData.reason);
+        setStats({
+          hot: 0,
+          warm: 0,
+          int: 0,
+          tihu: 0,
+          wsmsnt: 0,
+          total: 0,
+          targetProgress: {
+            productive: 0,
+            productiveGoal: 8,
+            productivePercent: 0,
+            totalGoal: 10,
+            totalPercent: 0
+          }
+        });
+      }
+
+      // Handle pass-ups
+      if (passUpsData.status === 'fulfilled' && passUpsData.value) {
+        setRecentPassUps(passUpsData.value);
+      } else {
+        console.warn('Failed to load pass-ups:', passUpsData.reason);
+        setRecentPassUps([]);
+      }
+
+      // Handle agent script
       const script = agentData?.customScript || '';
       setCustomScript(script);
       setEditedScript(script);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       toast.error('Failed to load dashboard: ' + (error.message || 'Unknown error'));
-      // Set default stats to prevent null errors
+      // Always set default stats to prevent null errors
       setStats({
         hot: 0,
         warm: 0,
@@ -64,6 +129,7 @@ function Dashboard() {
           totalPercent: 0
         }
       });
+      setRecentPassUps([]);
     } finally {
       setLoading(false);
     }
@@ -169,8 +235,7 @@ function Dashboard() {
         <BioBreakTimer agentId={agentId} />
 
         {/* Stats Card */}
-        {stats ? (
-          <div className="card">
+        <div className="card">
             <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
             
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
@@ -208,12 +273,6 @@ function Dashboard() {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="card">
-            <h2 className="text-lg font-bold mb-4">Today's Performance</h2>
-            <p className="text-gray-600 dark:text-gray-400">Failed to load stats. Please refresh the page.</p>
-          </div>
-        )}
 
         {/* Quick Actions */}
         <div className="grid sm:grid-cols-2 gap-4">

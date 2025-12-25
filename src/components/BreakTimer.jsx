@@ -7,10 +7,18 @@ import { useBreakAlarm } from '../hooks/useBreakAlarm';
 function BreakTimer({ agentId }) {
   const { schedule } = useBreakAlarm(agentId);
   const [activeBreak, setActiveBreak] = useState(null);
+  const [breakStartTime, setBreakStartTime] = useState(null);
+  const [breakElapsed, setBreakElapsed] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [nextBreak, setNextBreak] = useState(null);
   const [timeUntilNext, setTimeUntilNext] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Get break duration in minutes based on break type
+  const getBreakDuration = useCallback((type) => {
+    if (type === 'LUNCH') return 30;
+    return 15; // FIRST and SECOND breaks are 15 minutes
+  }, []);
 
   const parseTime = useCallback((timeString) => {
     const [hours, minutes] = timeString.split(':').map(Number);
@@ -24,54 +32,71 @@ function BreakTimer({ agentId }) {
       return;
     }
 
-    // Get current time (assuming browser is set to Philippine Time)
+    // Get current time in minutes from midnight
     const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const SHIFT_START = 21 * 60 + 30; // 9:30 PM = 1290 minutes
-    const SHIFT_END = 6 * 60 + 30; // 6:30 AM = 390 minutes
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTime = currentHours * 60 + currentMinutes;
 
-    const breaks = [
-      { type: 'FIRST', time: parseTime(schedule.firstBreak) },
-      schedule.secondBreak && { type: 'SECOND', time: parseTime(schedule.secondBreak) },
-      { type: 'LUNCH', time: parseTime(schedule.lunchTime) }
-    ].filter(Boolean);
+    // Break times in minutes from midnight
+    const firstBreakTime = parseTime(schedule.firstBreak); // 1:00 AM = 60
+    const secondBreakTime = schedule.secondBreak ? parseTime(schedule.secondBreak) : null; // 3:00 AM = 180
+    const lunchTime = parseTime(schedule.lunchTime); // 5:00 AM = 300
+    const shiftEnd = parseTime(schedule.endOfShift); // 6:30 AM = 390
+    const shiftStart = 21 * 60 + 30; // 9:30 PM = 1290
 
-    // Determine if we're in shift hours (9:30 PM - 6:30 AM)
-    const isInShiftHours = currentTime >= SHIFT_START || currentTime < SHIFT_END;
+    const breaksInOrder = [
+      { type: 'FIRST', time: firstBreakTime },
+      ...(secondBreakTime ? [{ type: 'SECOND', time: secondBreakTime }] : []),
+      { type: 'LUNCH', time: lunchTime }
+    ];
 
-    // Find next break
-    let next = null;
-    let minDiff = Infinity;
+    let nextBreakTime = null;
+    let nextBreakType = null;
 
-    for (const breakItem of breaks) {
-      let diff;
-      
-      if (isInShiftHours) {
-        // In shift hours
-        if (currentTime < breakItem.time) {
-          // Break hasn't happened yet today
-          diff = breakItem.time - currentTime;
-        } else {
-          // Break already passed, next one is tomorrow (but still same shift)
-          diff = (24 * 60) - currentTime + breakItem.time;
+    // Case 1: Between 9:30 PM and midnight (>=1290 and <1440)
+    if (currentTime >= shiftStart) {
+      // All breaks are after midnight today
+      // Time = (1440 - currentTime) + breakTime
+      let minDiff = Infinity;
+      for (const brk of breaksInOrder) {
+        const diff = (1440 - currentTime) + brk.time;
+        if (diff < minDiff) {
+          minDiff = diff;
+          nextBreakTime = minDiff;
+          nextBreakType = brk.type;
         }
-      } else {
-        // Outside shift hours, next break is at next shift
-        const hoursUntilShift = currentTime < SHIFT_START 
-          ? SHIFT_START - currentTime 
-          : (24 * 60) - currentTime + SHIFT_START;
-        diff = hoursUntilShift + breakItem.time;
-      }
-      
-      if (diff < minDiff) {
-        minDiff = diff;
-        next = breakItem;
       }
     }
+    // Case 2: Between midnight and 6:30 AM (<390)
+    else if (currentTime < shiftEnd) {
+      // Check which breaks haven't passed yet today
+      let found = false;
+      for (const brk of breaksInOrder) {
+        if (currentTime < brk.time) {
+          nextBreakTime = brk.time - currentTime;
+          nextBreakType = brk.type;
+          found = true;
+          break;
+        }
+      }
+      // If all breaks today have passed, next is tomorrow at 1:00 AM
+      if (!found) {
+        nextBreakTime = (1440 - currentTime) + firstBreakTime;
+        nextBreakType = 'FIRST';
+      }
+    }
+    // Case 3: Between 6:30 AM and 9:30 PM (outside shift)
+    else {
+      // Next break is at 1:00 AM, but we need to wait until shift starts
+      // From current time to 1:00 AM tomorrow = time to midnight + 1 hour
+      nextBreakTime = (1440 - currentTime) + firstBreakTime;
+      nextBreakType = 'FIRST';
+    }
 
-    if (next) {
-      setNextBreak(next);
-      setTimeUntilNext(minDiff);
+    if (nextBreakTime !== null && nextBreakType) {
+      setNextBreak({ type: nextBreakType });
+      setTimeUntilNext(nextBreakTime);
     } else {
       setNextBreak(null);
       setTimeUntilNext(null);
@@ -84,6 +109,30 @@ function BreakTimer({ agentId }) {
     const interval = setInterval(loadActiveBreak, 5000);
     return () => clearInterval(interval);
   }, [agentId]);
+
+  // Update break elapsed time every second when break is active
+  useEffect(() => {
+    if (activeBreak && breakStartTime) {
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - breakStartTime) / 1000);
+        setBreakElapsed(elapsedSeconds);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setBreakElapsed(0);
+    }
+  }, [activeBreak, breakStartTime]);
+
+  // Set break start time when break becomes active
+  useEffect(() => {
+    if (activeBreak && !breakStartTime) {
+      setBreakStartTime(Date.now());
+    } else if (!activeBreak) {
+      setBreakStartTime(null);
+      setBreakElapsed(0);
+    }
+  }, [activeBreak, breakStartTime]);
 
   useEffect(() => {
     // Update current time every second for PC time sync
@@ -187,16 +236,22 @@ function BreakTimer({ agentId }) {
 
       {activeBreak ? (
         <div className="space-y-4">
-          {/* Active Break Display */}
+          {/* Active Break Countdown Timer */}
           <div className="text-center p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              {getBreakLabel(activeBreak.type)}
+              {getBreakLabel(activeBreak.type)} - Countdown
             </div>
-            <div className="text-2xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2">
-              {currentTime.toLocaleTimeString()}
+            <div className="text-5xl sm:text-6xl font-bold text-blue-700 dark:text-blue-300 mb-2 font-mono">
+              {(() => {
+                const totalSeconds = getBreakDuration(activeBreak.type) * 60;
+                const remainingSeconds = Math.max(0, totalSeconds - breakElapsed);
+                const mins = Math.floor(remainingSeconds / 60);
+                const secs = remainingSeconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+              })()}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              Current time
+              Time remaining
             </div>
           </div>
 

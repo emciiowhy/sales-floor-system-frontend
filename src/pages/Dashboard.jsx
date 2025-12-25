@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -12,6 +12,7 @@ import BioBreakTimer from '../components/BioBreakTimer';
 import BreakTimer from '../components/BreakTimer';
 import LeaderboardSidebar from '../components/LeaderboardSidebar';
 import BreakSchedule from '../components/BreakSchedule';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -40,6 +41,12 @@ function Dashboard() {
   const [copiedId, setCopiedId] = useState(null);
   const [scriptCopied, setScriptCopied] = useState(false);
   const [showBreakSchedule, setShowBreakSchedule] = useState(false);
+  const [selectedDisposition, setSelectedDisposition] = useState(null);
+  const [dispositionPassUps, setDispositionPassUps] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollRef = useRef(null);
 
   const agentId = localStorage.getItem('agentId');
   const agentName = localStorage.getItem('agentName');
@@ -52,12 +59,40 @@ function Dashboard() {
     }
 
     try {
-      // Check if agent exists first
+      // Try to load cached data first for instant display
+      const cachedStats = sessionStorage.getItem('prefetch_stats');
+      const cachedPassups = sessionStorage.getItem('prefetch_passups');
+      const cachedAgent = sessionStorage.getItem('prefetch_agent');
+
+      if (cachedStats) {
+        try {
+          setStats(JSON.parse(cachedStats));
+        } catch (e) {
+          console.log('Failed to parse cached stats');
+        }
+      }
+      if (cachedPassups) {
+        try {
+          setRecentPassUps(JSON.parse(cachedPassups));
+        } catch (e) {
+          console.log('Failed to parse cached passups');
+        }
+      }
+      if (cachedAgent) {
+        try {
+          const agent = JSON.parse(cachedAgent);
+          setCustomScript(agent.customScript || '');
+          setEditedScript(agent.customScript || '');
+        } catch (e) {
+          console.log('Failed to parse cached agent');
+        }
+      }
+
+      // Check if agent exists
       let agentData;
       try {
         agentData = await api.getAgent(agentId);
       } catch (agentError) {
-        // Check for 404 status or "not found" in error message (case insensitive)
         const isNotFound = agentError.status === 404 || 
                           agentError.message?.toLowerCase().includes('not found') ||
                           agentError.message?.toLowerCase().includes('404');
@@ -81,6 +116,7 @@ function Dashboard() {
       // Handle stats
       if (statsData.status === 'fulfilled' && statsData.value) {
         setStats(statsData.value);
+        sessionStorage.setItem('prefetch_stats', JSON.stringify(statsData.value));
       } else {
         console.warn('Failed to load stats:', statsData.reason);
         setStats({
@@ -103,6 +139,7 @@ function Dashboard() {
       // Handle pass-ups
       if (passUpsData.status === 'fulfilled' && passUpsData.value) {
         setRecentPassUps(passUpsData.value);
+        sessionStorage.setItem('prefetch_passups', JSON.stringify(passUpsData.value));
       } else {
         console.warn('Failed to load pass-ups:', passUpsData.reason);
         setRecentPassUps([]);
@@ -112,6 +149,7 @@ function Dashboard() {
       const script = agentData?.customScript || '';
       setCustomScript(script);
       setEditedScript(script);
+      sessionStorage.setItem('prefetch_agent', JSON.stringify(agentData));
     } catch (error) {
       console.error('Failed to load dashboard:', error);
       
@@ -201,15 +239,142 @@ function Dashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
-        </div>
-      </div>
+  const handleViewDisposition = async (disposition) => {
+    try {
+      const data = await api.getAgentPassUps(agentId, { limit: 100 });
+      // Filter pass-ups by exact disposition match
+      const filtered = data.filter(p => p.disposition === disposition);
+      setDispositionPassUps(filtered);
+      setSelectedDisposition(disposition);
+    } catch (error) {
+      toast.error(`Failed to load ${disposition} pass-ups: ` + error.message);
+    }
+  };
+
+  // Filter and sort pass-ups
+  const filteredAndSortedPassUps = useMemo(() => {
+    let filtered = dispositionPassUps.filter(p => 
+      !searchQuery || 
+      p.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.notes?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.phoneNumber?.includes(searchQuery)
     );
+
+    // Sort
+    if (sortBy === 'newest') {
+      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === 'oldest') {
+      filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (sortBy === 'name') {
+      filtered.sort((a, b) => (a.customerName || '').localeCompare(b.customerName || ''));
+    }
+
+    return filtered;
+  }, [dispositionPassUps, searchQuery, sortBy]);
+
+  // Export as CSV
+  const handleExportCSV = () => {
+    if (filteredAndSortedPassUps.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const headers = ['Name', 'Disposition', 'Phone', 'Notes', 'Time'];
+    const rows = filteredAndSortedPassUps.map(p => [
+      p.customerName || 'N/A',
+      p.disposition,
+      p.phoneNumber || 'N/A',
+      p.notes || 'N/A',
+      new Date(p.createdAt).toLocaleString()
+    ]);
+
+    const csv = [headers, ...rows].map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedDisposition}_leads_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    toast.success('Exported successfully!');
+  };
+
+  // Scroll to top button handler
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === 'Escape' && selectedDisposition) {
+        handleCloseDispositionModal();
+      }
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        // Focus search input
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedDisposition]);
+
+  const getMotivationalQuote = (disposition) => {
+    const quotes = {
+      HOT: {
+        emoji: '🔥',
+        title: 'No Hot Leads Yet',
+        message: 'Time to turn up the heat! Make those calls and close some hot prospects today!',
+        subtitle: '💪 You got this!'
+      },
+      WARM: {
+        emoji: '☀️',
+        title: 'No Warm Leads Yet',
+        message: 'Keep the momentum going! Every warm lead is a potential sale waiting to happen.',
+        subtitle: '🚀 Push forward!'
+      },
+      INT: {
+        emoji: '💭',
+        title: 'No Interested Leads Yet',
+        message: 'Interest is just a step away! Keep qualifying and educating your prospects.',
+        subtitle: '📞 Stay focused!'
+      },
+      TIHU: {
+        emoji: '🎯',
+        title: 'No TIHU Leads Yet',
+        message: 'Think about what makes a great lead! Time to make those connections count.',
+        subtitle: '✨ Excellence awaits!'
+      },
+      WSMSNT: {
+        emoji: '⏰',
+        title: 'No WSMSNT Leads Yet',
+        message: 'Will Sell More Specifically Next Time - keep learning and improving!',
+        subtitle: '📈 Growth is coming!'
+      }
+    };
+    return quotes[disposition] || quotes.HOT;
+  };
+
+  const handleCloseDispositionModal = () => {
+    setSelectedDisposition(null);
+    setDispositionPassUps([]);
+  };
+
+  if (loading) {
+    return <SkeletonLoader />;
   }
 
   return (
@@ -266,11 +431,11 @@ function Dashboard() {
             </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6">
-            <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" />
-            <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" />
-            <StatBadge label="INT" value={stats.int || 0} color="bg-int" />
-            <StatBadge label="TIHU" value={stats.tihu || 0} color="bg-tihu" />
-            <StatBadge label="WSMSNT" value={stats.wsmsnt || 0} color="bg-wsmsnt" />
+            <StatBadge label="HOT" value={stats.hot || 0} color="bg-hot" onClick={() => handleViewDisposition('HOT')} />
+            <StatBadge label="WARM" value={stats.warm || 0} color="bg-warm" onClick={() => handleViewDisposition('WARM')} />
+            <StatBadge label="INT" value={stats.int || 0} color="bg-int" onClick={() => handleViewDisposition('INT')} />
+            <StatBadge label="TIHU" value={stats.tihu || 0} color="bg-tihu" onClick={() => handleViewDisposition('TIHU')} />
+            <StatBadge label="WSMSNT" value={stats.wsmsnt || 0} color="bg-wsmsnt" onClick={() => handleViewDisposition('WSMSNT')} />
           </div>
 
           <div className="space-y-2">
@@ -440,32 +605,256 @@ function Dashboard() {
             <div className="text-3xl flex-shrink-0">⚠️</div>
             <div>
               <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-2">
-                EXCLUSIVE TO VICI DIALERS - CONFIDENTIAL
+                EXCLUSIVE TO VICI DIAL IDEX - CONFIDENTIAL
               </h3>
               <p className="text-red-700 dark:text-red-300 font-semibold mb-2">
-                DO NOT SHARE THIS WEBSITE. This platform is exclusive to VICI Dialers work-from-home agents only.
+                DO NOT SHARE THIS WEBSITE. This platform is exclusive to VICI Dial IDEX work-from-home agents only.
               </p>
               <p className="text-red-600 dark:text-red-400 font-bold">
-                ⛔ FAILURE TO COMPLY WILL RESULT IN PUNISHMENT
+                ⛔ FAILURE TO COMPLY WILL RESULT IN PUNISHMENT!
               </p>
             </div>
           </div>
         </div>
         </div>
       </div>
+
+      {/* Disposition Modal - Enhanced */}
+      {selectedDisposition && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Modal Header with Stats */}
+            <div className="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-slate-800 dark:to-slate-900 px-6 py-6 border-b border-gray-200 dark:border-slate-700">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className={`w-5 h-5 ${
+                    selectedDisposition === 'HOT' ? 'bg-hot' :
+                    selectedDisposition === 'WARM' ? 'bg-warm' :
+                    selectedDisposition === 'INT' ? 'bg-int' :
+                    selectedDisposition === 'TIHU' ? 'bg-tihu' :
+                    'bg-wsmsnt'
+                  } rounded-lg shadow-lg`}></div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{selectedDisposition} Pass-Ups Today</h3>
+                    <p className="text-sm text-gray-300">View all {dispositionPassUps.length} lead{dispositionPassUps.length !== 1 ? 's' : ''} for this disposition</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseDispositionModal}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </div>
+              
+              {/* Quick Stats */}
+              {dispositionPassUps.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/10">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">{dispositionPassUps.length}</p>
+                    <p className="text-xs text-gray-300">Total Leads</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">{dispositionPassUps.filter(p => p.notes).length}</p>
+                    <p className="text-xs text-gray-300">With Notes</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">{new Date().toLocaleTimeString().split(' ')[1]}</p>
+                    <p className="text-xs text-gray-300">Current Time</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Search and Sort Controls */}
+            {dispositionPassUps.length > 0 && (
+              <div className="sticky top-0 z-10 bg-gradient-to-b from-gray-50 to-white dark:from-slate-800 dark:to-slate-900 px-6 py-4 border-b border-gray-200 dark:border-slate-700 space-y-4">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, phone, or notes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Sort and Export Controls */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name">By Name (A-Z)</option>
+                  </select>
+
+                  <button
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors shadow-sm hover:shadow-md active:scale-95"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Export</span>
+                  </button>
+
+                  <p className="text-xs text-gray-600 dark:text-gray-400 ml-auto">
+                    Showing {filteredAndSortedPassUps.length} of {dispositionPassUps.length} leads
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="overflow-y-auto flex-1 p-6">
+              {dispositionPassUps.length > 0 ? (
+                filteredAndSortedPassUps.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredAndSortedPassUps.map((passUp, index) => (
+                      <div
+                        key={passUp.id}
+                        className="flex items-stretch justify-between p-5 bg-gradient-to-br from-gray-50 to-white dark:from-slate-800 dark:to-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 hover:shadow-lg dark:hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200 group animate-in fade-in slide-in-from-bottom-4"
+                      >
+                        {/* Left Section - Lead Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-3">
+                            {/* Index Badge */}
+                            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
+                              <span className="text-xs font-bold text-white">{index + 1}</span>
+                            </div>
+                            
+                            {/* Disposition Badge */}
+                            <DispositionBadge disposition={passUp.disposition} />
+                            
+                            {/* Time */}
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 ml-auto">
+                              ⏰ {new Date(passUp.createdAt).toLocaleTimeString()}
+                            </span>
+                          </div>
+
+                          {/* Customer Name / Lead Title */}
+                          <div className="mb-2">
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">
+                              {passUp.customerName ? (
+                                <span>👤 {passUp.customerName}</span>
+                              ) : (
+                                <span className="text-gray-400 italic">📞 Phone Lead</span>
+                              )}
+                            </p>
+                          </div>
+
+                          {/* Notes/Comments */}
+                          {passUp.notes ? (
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border-l-2 border-blue-500">
+                              💬 {passUp.notes}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 italic">📝 No notes added</p>
+                          )}
+
+                          {/* Additional Info Row */}
+                          <div className="flex gap-3 mt-3 text-xs text-gray-600 dark:text-gray-400 flex-wrap">
+                            {passUp.phoneNumber && (
+                              <span className="bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">📱 {passUp.phoneNumber}</span>
+                            )}
+                            {passUp.leadSource && (
+                              <span className="bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">🔗 {passUp.leadSource}</span>
+                            )}
+                            {passUp.callDuration && (
+                              <span className="bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded">⏱️ {passUp.callDuration}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Right Section - Action Button */}
+                        <button
+                          onClick={() => handleCopy(passUp)}
+                          className="ml-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 transition-all duration-200 flex-shrink-0 group-hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                          title="Copy to clipboard"
+                        >
+                          {copiedId === passUp.id ? (
+                            <Check className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <Copy className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <p className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">No Results Found</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500">Try adjusting your search or sort filters</p>
+                  </div>
+                )
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                  {/* Motivational Quote Display */}
+                  <div className="text-7xl mb-6 animate-bounce">{getMotivationalQuote(selectedDisposition).emoji}</div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                    {getMotivationalQuote(selectedDisposition).title}
+                  </h3>
+                  <p className="text-lg text-gray-700 dark:text-gray-300 mb-4 max-w-sm">
+                    {getMotivationalQuote(selectedDisposition).message}
+                  </p>
+                  <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">
+                    {getMotivationalQuote(selectedDisposition).subtitle}
+                  </p>
+                  
+                  {/* Call to Action */}
+                  <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      📞 Make calls now to start adding {selectedDisposition} leads!
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-800 px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Click the copy button to copy lead details to clipboard
+              </p>
+              <button
+                onClick={handleCloseDispositionModal}
+                className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-md hover:shadow-lg active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 active:scale-95 z-40 animate-in fade-in slide-in-from-bottom-4"
+          title="Scroll to top (Press End key)"
+        >
+          <ArrowUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }
 
-const StatBadge = memo(function StatBadge({ label, value, color }) {
+const StatBadge = memo(function StatBadge({ label, value, color, onClick }) {
   return (
-    <div className="stat-card text-center group hover:scale-105 transition-transform duration-200">
+    <button
+      onClick={onClick}
+      className="stat-card text-center group hover:scale-105 transition-transform duration-200 cursor-pointer active:scale-95"
+    >
       <div className={`w-4 h-4 ${color} rounded-full mx-auto mb-2 shadow-sm group-hover:shadow-md transition-shadow`}></div>
       <div className="text-2xl sm:text-3xl font-bold mb-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
         {value}
       </div>
       <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">{label}</div>
-    </div>
+    </button>
   );
 });
 

@@ -1,10 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { lazy, Suspense } from 'react';
 import AgentSetup from './pages/AgentSetup';
-import Dashboard from './pages/Dashboard';
-import PassUpForm from './pages/PassUpForm';
-import Leaderboard from './pages/Leaderboard';
+import LoadingSplash from './components/LoadingSplash';
 import { DarkModeProvider } from './hooks/useDarkMode';
+
+// Lazy load routes for code splitting and faster initial load
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const PassUpForm = lazy(() => import('./pages/PassUpForm'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 
 function ProtectedRoute({ children }) {
   const agentId = localStorage.getItem('agentId');
@@ -27,7 +31,9 @@ function App() {
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Suspense fallback={<LoadingSplash />}>
+                  <Dashboard />
+                </Suspense>
               </ProtectedRoute>
             } 
           />
@@ -35,7 +41,9 @@ function App() {
             path="/passup" 
             element={
               <ProtectedRoute>
-                <PassUpForm />
+                <Suspense fallback={<LoadingSplash />}>
+                  <PassUpForm />
+                </Suspense>
               </ProtectedRoute>
             } 
           />
@@ -43,7 +51,9 @@ function App() {
             path="/leaderboard" 
             element={
               <ProtectedRoute>
-                <Leaderboard />
+                <Suspense fallback={<LoadingSplash />}>
+                  <Leaderboard />
+                </Suspense>
               </ProtectedRoute>
             } 
           />

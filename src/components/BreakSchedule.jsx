@@ -12,7 +12,7 @@ function BreakSchedule({ agentId }) {
     lunchTime: '05:00',
     endOfShift: '06:30',
     alarmEnabled: true,
-    alarmVolume: 70
+    alarmVolume: 100
   });
 
   if (!schedule) {
@@ -188,13 +188,23 @@ function BreakSchedule({ agentId }) {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Shift Information */}
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2 uppercase tracking-wide">Shift Details</div>
+            <div className="text-sm text-blue-900 dark:text-blue-100">
+              <p><strong>Shift:</strong> 9:30 PM – 6:30 AM PH TIME</p>
+              <p className="text-xs mt-1 text-blue-800 dark:text-blue-200">Bio break: 15 minutes total per shift</p>
+            </div>
+          </div>
+
+          {/* Break Schedule Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3">
-            <ScheduleItem label="First Break" time={schedule.firstBreak} />
+            <ScheduleItem label="First Break" time={schedule.firstBreak} duration="15 min" />
             {schedule.secondBreak && (
-              <ScheduleItem label="Second Break" time={schedule.secondBreak} />
+              <ScheduleItem label="Second Break" time={schedule.secondBreak} duration="15 min" />
             )}
-            <ScheduleItem label="Lunch" time={schedule.lunchTime} />
-            <ScheduleItem label="End of Shift" time={schedule.endOfShift} />
+            <ScheduleItem label="Lunch" time={schedule.lunchTime} duration="30 min" />
+            <ScheduleItem label="End of Shift" time={schedule.endOfShift} duration="—" />
           </div>
           
           {nextAlarm && schedule.alarmEnabled && (
@@ -216,11 +226,12 @@ function BreakSchedule({ agentId }) {
   );
 }
 
-function ScheduleItem({ label, time }) {
+function ScheduleItem({ label, time, duration }) {
   return (
     <div className="stat-card p-4 group hover:scale-[1.02] transition-transform">
       <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">{label}</div>
       <div className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">{time}</div>
+      {duration && <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{duration}</div>}
     </div>
   );
 }

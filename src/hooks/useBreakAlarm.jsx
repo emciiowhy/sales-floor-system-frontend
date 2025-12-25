@@ -152,12 +152,33 @@ export function useBreakAlarm(agentId) {
     if (diff <= 60000 && diff >= 0 && !alarmTriggered) {
       setAlarmTriggered(true);
       
-      // Play alarm sound
+      // Play alarm sound with better error handling
       if (audioRef.current) {
-        audioRef.current.volume = (schedule.alarmVolume || 70) / 100;
-        audioRef.current.play().catch(error => {
-          console.error('Failed to play alarm sound:', error);
-        });
+        try {
+          audioRef.current.volume = Math.min(1, (schedule.alarmVolume || 100) / 100);
+          // Force reload the audio source to ensure it plays
+          audioRef.current.currentTime = 0;
+          const playPromise = audioRef.current.play();
+          
+          // Handle promise-based playback
+          if (playPromise !== undefined) {
+            playPromise
+              .catch(error => {
+                console.error('Failed to play alarm sound:', error);
+                // Fallback: show a more prominent notification if audio fails
+                toast.error(`⏰ BREAK ALARM: ${nextAlarm.type}!`, {
+                  duration: 10000,
+                  description: 'Your break is starting now. Audio may not be available.'
+                });
+              });
+          }
+        } catch (error) {
+          console.error('Error playing alarm:', error);
+          toast.error(`⏰ BREAK ALARM: ${nextAlarm.type}!`, {
+            duration: 10000,
+            description: 'Your break is starting now.'
+          });
+        }
       }
 
       // Show toast notification
@@ -189,8 +210,8 @@ export function useBreakAlarm(agentId) {
   // Check alarm periodically
   useEffect(() => {
     if (schedule?.alarmEnabled && nextAlarm) {
-      // Check every 30 seconds
-      checkIntervalRef.current = setInterval(checkAlarm, 30000);
+      // Check every 1 second for faster alarm response
+      checkIntervalRef.current = setInterval(checkAlarm, 1000);
       // Also check immediately
       checkAlarm();
       

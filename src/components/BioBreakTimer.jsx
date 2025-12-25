@@ -36,15 +36,15 @@ function BioBreakTimer({ agentId }) {
       interval = setInterval(() => {
         const now = Date.now();
         const elapsedMs = now - startTime;
-        const elapsedMinutes = Math.floor(elapsedMs / 1000 / 60);
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
         setElapsed(prev => {
           // Only update if changed to prevent unnecessary re-renders
-          if (prev !== elapsedMinutes) {
+          if (prev !== elapsedSeconds) {
             // Warn at 12 minutes (3 minutes remaining)
-            if (elapsedMinutes >= 12 && elapsedMinutes < 13 && prev < 12) {
+            if (elapsedSeconds >= 720 && elapsedSeconds < 780 && prev < 720) {
               toast.warning('⚠️ Bio break: 3 minutes remaining in your 15-minute pool!');
             }
-            return elapsedMinutes;
+            return elapsedSeconds;
           }
           return prev;
         });
@@ -86,8 +86,9 @@ function BioBreakTimer({ agentId }) {
     }
   };
 
-  const remaining = TOTAL_BIO_MINUTES - totalUsed - elapsed;
-  const percentageUsed = ((totalUsed + elapsed) / TOTAL_BIO_MINUTES) * 100;
+  const elapsedMinutes = elapsed / 60; // Convert seconds to minutes
+  const remaining = TOTAL_BIO_MINUTES - totalUsed - elapsedMinutes;
+  const percentageUsed = ((totalUsed + elapsedMinutes) / TOTAL_BIO_MINUTES) * 100;
 
   return (
     <div className="card">
@@ -100,9 +101,9 @@ function BioBreakTimer({ agentId }) {
         {/* Progress Bar */}
         <div>
           <div className="flex justify-between text-sm mb-2">
-            <span className="font-medium">Pool Usage</span>
+            <span className="font-medium">Time Usage</span>
             <span className="text-gray-600 dark:text-gray-400">
-              {totalUsed + elapsed} / {TOTAL_BIO_MINUTES} minutes
+              {Math.round(totalUsed + elapsedMinutes)} / {TOTAL_BIO_MINUTES} minutes
             </span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
@@ -118,18 +119,24 @@ function BioBreakTimer({ agentId }) {
             ></div>
           </div>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-            {remaining > 0 ? `${remaining} minutes remaining` : 'No time remaining'}
+            {remaining > 0 ? `${Math.round(remaining)} minutes remaining` : 'No time remaining'}
           </p>
         </div>
 
         {/* Timer Display */}
         {isRunning && (
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <p className="text-2xl sm:text-3xl font-bold text-green-700 dark:text-green-300">
-              {String(Math.floor(elapsed / 60)).padStart(2, '0')}:
-              {String(elapsed % 60).padStart(2, '0')}
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Time Remaining</p>
+            <p className="text-5xl sm:text-6xl font-bold text-green-700 dark:text-green-300 font-mono">
+              {(() => {
+                const totalSeconds = TOTAL_BIO_MINUTES * 60;
+                const remainingSeconds = Math.max(0, totalSeconds - elapsed);
+                const mins = Math.floor(remainingSeconds / 60);
+                const secs = remainingSeconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+              })()}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Current break</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Countdown</p>
           </div>
         )}
 

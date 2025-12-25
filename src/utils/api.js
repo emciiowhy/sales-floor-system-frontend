@@ -8,8 +8,45 @@ if (import.meta.env.PROD && !API_URL) {
   console.error('Please set VITE_API_URL in Vercel project settings to your Render backend URL.');
 }
 
+// Simple cache implementation with expiration
+const requestCache = new Map();
+const CACHE_DURATION = 30000; // 30 seconds
+
+function getCacheKey(endpoint, options) {
+  return `${endpoint}:${JSON.stringify(options || {})}`;
+}
+
+function getCachedResponse(endpoint, options) {
+  const key = getCacheKey(endpoint, options);
+  const cached = requestCache.get(key);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  
+  if (cached) {
+    requestCache.delete(key);
+  }
+  
+  return null;
+}
+
+function setCachedResponse(endpoint, options, data) {
+  const key = getCacheKey(endpoint, options);
+  requestCache.set(key, { data, timestamp: Date.now() });
+}
+
 async function fetchAPI(endpoint, options = {}) {
   const fullUrl = `${API_URL}${endpoint}`;
+  
+  // Only cache GET requests
+  if (!options.method || options.method === 'GET') {
+    const cached = getCachedResponse(endpoint, options);
+    if (cached) {
+      console.log(`✅ Using cached response for ${endpoint}`);
+      return cached;
+    }
+  }
   
   try {
     const response = await fetch(fullUrl, {
@@ -29,7 +66,14 @@ async function fetchAPI(endpoint, options = {}) {
       throw apiError;
     }
 
-    return response.json();
+    const data = await response.json();
+    
+    // Cache GET requests
+    if (!options.method || options.method === 'GET') {
+      setCachedResponse(endpoint, options, data);
+    }
+    
+    return data;
   } catch (error) {
     // Handle network errors (connection refused, etc.)
     if (error.name === 'TypeError' && error.message.includes('fetch')) {

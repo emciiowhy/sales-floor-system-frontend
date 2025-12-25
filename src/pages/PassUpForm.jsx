@@ -149,7 +149,7 @@ function PassUpForm() {
               value={formData.leadName}
               onChange={(e) => setFormData({ ...formData, leadName: e.target.value })}
               className="input"
-              placeholder="John Doe"
+              placeholder="Rocky Knox"
               required
             />
           </div>
@@ -164,7 +164,7 @@ function PassUpForm() {
               value={formData.interestedIn}
               onChange={(e) => setFormData({ ...formData, interestedIn: e.target.value })}
               className="input"
-              placeholder="e.g., AI Technology, Biotech, Energy..."
+              placeholder="e.g : CNN"
             />
           </div>
 

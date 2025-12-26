@@ -9,15 +9,18 @@ export default function Chat({ agentId, agentName }) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const lastFetchTimeRef = useRef(Date.now());
   const pollIntervalRef = useRef(null);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom within the chat container only
   const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 0);
+    if (messagesContainerRef.current) {
+      setTimeout(() => {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }, 0);
+    }
   }, []);
 
   useEffect(() => {
@@ -123,7 +126,10 @@ export default function Chat({ agentId, agentName }) {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-slate-800">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-slate-800"
+      >
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -200,7 +206,6 @@ export default function Chat({ agentId, agentName }) {
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Error Message */}

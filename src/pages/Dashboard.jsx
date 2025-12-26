@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, memo, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp, Trash2 } from 'lucide-react';
+import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp, Trash2, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -50,6 +50,7 @@ function Dashboard() {
   const [editingPassUp, setEditingPassUp] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [savingPassUp, setSavingPassUp] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const scrollRef = useRef(null);
 
   const agentId = localStorage.getItem('agentId');
@@ -478,6 +479,13 @@ function Dashboard() {
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <button
+                onClick={() => setShowChatModal(true)}
+                className="p-2.5 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all duration-200 hover:scale-110 active:scale-95 min-h-11 min-w-11"
+                title="Open team chat"
+              >
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+              </button>
+              <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2.5 sm:p-3 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-110 active:scale-95 min-h-11 min-w-11"
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -601,26 +609,8 @@ function Dashboard() {
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Pass-Ups and Actions */}
+            {/* Left Column - Sales Script and Actions */}
             <div className="lg:col-span-2 space-y-6">
-              {/* New Pass-Up Action */}
-              <button
-                onClick={() => navigate('/passup')}
-                className="card-hover group relative overflow-hidden w-full text-left"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center gap-3 sm:gap-4">
-                  <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
-                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base sm:text-lg mb-1">New Pass-Up</h3>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Submit a fresh lead</p>
-                  </div>
-                  <ChevronUp className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-
               {/* Sales Script Section */}
               <div className="card">
                 <div className="flex items-center justify-between mb-6">
@@ -767,11 +757,6 @@ function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <BioBreakTimer agentId={agentId} />
             <BreakTimer agentId={agentId} />
-          </div>
-
-          {/* Team Chat */}
-          <div className="h-96">
-            <Chat agentId={agentId} agentName={agentName} />
           </div>
 
           {/* Disclaimer */}
@@ -1165,6 +1150,28 @@ function Dashboard() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Modal */}
+      {showChatModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 px-6 py-4 border-b border-blue-500/30 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white">Team Chat</h3>
+              <button
+                onClick={() => setShowChatModal(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            {/* Chat Content */}
+            <div className="flex-1 overflow-hidden">
+              <Chat agentId={agentId} agentName={agentName} />
             </div>
           </div>
         </div>

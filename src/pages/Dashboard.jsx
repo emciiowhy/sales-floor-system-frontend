@@ -218,6 +218,15 @@ function Dashboard() {
       await api.deletePassUp(passUp.id, agentId);
       setDispositionPassUps(prev => prev.filter(p => p.id !== passUp.id));
       toast.success('Pass-up deleted successfully!');
+      
+      // Refresh stats after deletion
+      try {
+        const updatedStats = await api.getAgentStats(agentId, 'daily');
+        setStats(updatedStats);
+        sessionStorage.setItem('prefetch_stats', JSON.stringify(updatedStats));
+      } catch (statsError) {
+        console.error('Failed to refresh stats:', statsError);
+      }
     } catch (error) {
       toast.error('Failed to delete pass-up: ' + error.message);
     }
@@ -256,6 +265,15 @@ function Dashboard() {
       setEditingPassUp(null);
       setEditFormData({});
       toast.success('Pass-up updated successfully!');
+      
+      // Refresh stats after update
+      try {
+        const updatedStats = await api.getAgentStats(agentId, 'daily');
+        setStats(updatedStats);
+        sessionStorage.setItem('prefetch_stats', JSON.stringify(updatedStats));
+      } catch (statsError) {
+        console.error('Failed to refresh stats:', statsError);
+      }
     } catch (error) {
       toast.error('Failed to update pass-up: ' + error.message);
     } finally {

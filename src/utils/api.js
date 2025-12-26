@@ -160,4 +160,19 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+
+  // Messages (Chat)
+  getMessages: (limit = 50, offset = 0) =>
+    fetchAPI(`/api/messages?limit=${limit}&offset=${offset}`),
+
+  getRecentMessages: (since = null) => {
+    const sinceParam = since ? `?since=${since}` : '';
+    return fetchAPI(`/api/messages/recent${sinceParam}`);
+  },
+
+  createMessage: (agentId, content) =>
+    fetchAPI('/api/messages', {
+      method: 'POST',
+      body: JSON.stringify({ agentId, content }),
+    }),
 };

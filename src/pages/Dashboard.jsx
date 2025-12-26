@@ -13,6 +13,7 @@ import BreakTimer from '../components/BreakTimer';
 import LeaderboardSidebar from '../components/LeaderboardSidebar';
 import BreakSchedule from '../components/BreakSchedule';
 import SkeletonLoader from '../components/SkeletonLoader';
+import Chat from '../components/Chat';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -679,7 +680,12 @@ function Dashboard() {
           <BreakTimer agentId={agentId} />
         </div>
 
-        {/* Section 5: Disclaimer - Full Width at Bottom */}
+        {/* Section 5: Team Chat - Full Width */}
+        <div className="h-96">
+          <Chat agentId={agentId} agentName={agentName} />
+        </div>
+
+        {/* Section 6: Disclaimer - Full Width at Bottom */}
         <div className="card border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-950/30">
           <div className="flex items-start gap-4">
             <div className="text-3xl flex-shrink-0">⚠️</div>

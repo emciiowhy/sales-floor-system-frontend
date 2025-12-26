@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, memo, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp } from 'lucide-react';
+import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
@@ -46,6 +46,9 @@ function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [editingPassUp, setEditingPassUp] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [savingPassUp, setSavingPassUp] = useState(false);
   const scrollRef = useRef(null);
 
   const agentId = localStorage.getItem('agentId');
@@ -204,6 +207,65 @@ function Dashboard() {
     setCopiedId(passUp.id);
     toast.success('Copied to clipboard!');
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDeletePassUp = async (passUp) => {
+    if (!window.confirm(`Are you sure you want to delete the pass-up for ${passUp.leadName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.deletePassUp(passUp.id, agentId);
+      setDispositionPassUps(prev => prev.filter(p => p.id !== passUp.id));
+      toast.success('Pass-up deleted successfully!');
+    } catch (error) {
+      toast.error('Failed to delete pass-up: ' + error.message);
+    }
+  };
+
+  const handleEditPassUp = (passUp) => {
+    setEditingPassUp(passUp.id);
+    setEditFormData({
+      ticker: passUp.ticker || '',
+      leadName: passUp.leadName || '',
+      interestedIn: passUp.interestedIn || '',
+      agreedToSMS: passUp.agreedToSMS || false,
+      disposition: passUp.disposition || '',
+      notes: passUp.notes || '',
+      tickerPrice: passUp.tickerPrice || ''
+    });
+  };
+
+  const handleSavePassUp = async () => {
+    if (!editFormData.leadName.trim()) {
+      toast.error('Lead name is required');
+      return;
+    }
+
+    if (!editFormData.disposition) {
+      toast.error('Disposition is required');
+      return;
+    }
+
+    setSavingPassUp(true);
+    try {
+      const updatedPassUp = await api.updatePassUp(editingPassUp, editFormData, agentId);
+      setDispositionPassUps(prev =>
+        prev.map(p => p.id === editingPassUp ? updatedPassUp : p)
+      );
+      setEditingPassUp(null);
+      setEditFormData({});
+      toast.success('Pass-up updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update pass-up: ' + error.message);
+    } finally {
+      setSavingPassUp(false);
+    }
+  };
+
+  const handleCancelEditPassUp = () => {
+    setEditingPassUp(null);
+    setEditFormData({});
   };
 
   const handleCopyScript = async () => {
@@ -767,18 +829,34 @@ function Dashboard() {
                           </div>
                         </div>
 
-                        {/* Right Section - Action Button */}
-                        <button
-                          onClick={() => handleCopy(passUp)}
-                          className="ml-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 transition-all duration-200 flex-shrink-0 group-hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
-                          title="Copy to clipboard"
-                        >
-                          {copiedId === passUp.id ? (
-                            <Check className="w-5 h-5 text-green-500" />
-                          ) : (
-                            <Copy className="w-5 h-5" />
-                          )}
-                        </button>
+                        {/* Right Section - Action Buttons */}
+                        <div className="ml-4 flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => handleCopy(passUp)}
+                            className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 transition-all duration-200 group-hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                            title="Copy to clipboard"
+                          >
+                            {copiedId === passUp.id ? (
+                              <Check className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <Copy className="w-5 h-5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleEditPassUp(passUp)}
+                            className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 transition-all duration-200 group-hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                            title="Edit pass-up"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePassUp(passUp)}
+                            className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 transition-all duration-200 group-hover:scale-110 active:scale-95 shadow-sm hover:shadow-md"
+                            title="Delete pass-up"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -823,6 +901,156 @@ function Dashboard() {
                 className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-md hover:shadow-lg active:scale-95"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Pass-Up Modal */}
+      {editingPassUp && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Edit2 className="w-5 h-5" />
+                <h2 className="text-xl font-bold">Edit Pass-Up</h2>
+              </div>
+              <button
+                onClick={handleCancelEditPassUp}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              {/* Lead Name */}
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Lead Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.leadName || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, leadName: e.target.value })}
+                  className="input"
+                  placeholder="Enter lead name"
+                />
+              </div>
+
+              {/* Ticker */}
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Ticker
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.ticker || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, ticker: e.target.value.toUpperCase() })}
+                  className="input"
+                  maxLength={10}
+                  placeholder="e.g. QTZM"
+                />
+              </div>
+
+              {/* Interested In */}
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Interested In
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.interestedIn || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, interestedIn: e.target.value })}
+                  className="input"
+                  placeholder="e.g. CNN"
+                />
+              </div>
+
+              {/* Disposition */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Disposition <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { value: 'HOT', color: 'bg-hot' },
+                    { value: 'WARM', color: 'bg-warm' },
+                    { value: 'INT', color: 'bg-int' },
+                    { value: 'TIHU', color: 'bg-tihu' },
+                    { value: 'WSMSNT', color: 'bg-wsmsnt' }
+                  ].map(({ value, color }) => (
+                    <button
+                      key={value}
+                      onClick={() => setEditFormData({ ...editFormData, disposition: value })}
+                      className={`py-2 px-2 rounded font-semibold text-white text-xs transition-all ${
+                        editFormData.disposition === value
+                          ? `${color} ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-slate-800 scale-105`
+                          : `${color} opacity-60 hover:opacity-100`
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Agreed to SMS */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="editAgreedToSMS"
+                  checked={editFormData.agreedToSMS || false}
+                  onChange={(e) => setEditFormData({ ...editFormData, agreedToSMS: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                />
+                <label htmlFor="editAgreedToSMS" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  Agreed to SMS
+                </label>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Notes
+                </label>
+                <textarea
+                  value={editFormData.notes || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  className="input resize-none text-sm"
+                  rows={3}
+                  placeholder="Add notes..."
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 px-6 py-4 flex gap-3">
+              <button
+                onClick={handleCancelEditPassUp}
+                className="flex-1 btn-secondary py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSavePassUp}
+                disabled={savingPassUp}
+                className="flex-1 btn-primary py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {savingPassUp ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

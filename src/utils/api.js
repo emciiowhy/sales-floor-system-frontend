@@ -109,6 +109,17 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  deletePassUp: (passUpId, agentId) =>
+    fetchAPI(`/api/passups/${passUpId}?agentId=${agentId}`, {
+      method: 'DELETE',
+    }),
+
+  updatePassUp: (passUpId, data, agentId) =>
+    fetchAPI(`/api/passups/${passUpId}?agentId=${agentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
   getAgentPassUps: (agentId, params = {}) => {
     const query = new URLSearchParams(params).toString();
     return fetchAPI(`/api/passups/agent/${agentId}${query ? `?${query}` : ''}`);

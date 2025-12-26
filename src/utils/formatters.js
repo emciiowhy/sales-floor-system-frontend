@@ -29,24 +29,22 @@ export function formatPassUpForCopy(passUp) {
       });
     }
   
-    const dispositionEmoji = {
-      HOT: '🔥',
-      WARM: '🟧',
-      INT: '🔵',
-      TIHU: '🟡',
-      WSMSNT: '⚪'
-    };
+    let text = `PASS-UP | ${date}
   
-    return `📊 PASS-UP | ${date}
+  TICKER ${passUp.ticker}${priceInfo}
+  NAME: ${passUp.leadName}
+  Interested In: ${passUp.interestedIn}
+  SMS: ${passUp.agreedToSMS ? 'Yes' : 'No'}
+  Disposition: ${passUp.disposition}`;
   
-  🎯 ${passUp.ticker}${priceInfo}
-  👤 ${passUp.leadName}
-  💡 Interested In: ${passUp.interestedIn}
-  📱 SMS: ${passUp.agreedToSMS ? '✅ Yes' : '❌ No'}
-  ${dispositionEmoji[passUp.disposition] || '⚫'} Disposition: ${passUp.disposition}
+    if (rebuttalsHandled.length > 0) {
+      text += `\n\n  Rebuttals Handled:
+${rebuttalsHandled.map(r => `  - ${r}`).join('\n')}`;
+    }
   
-  ${rebuttalsHandled.length > 0 ? `🛡️ Rebuttals Handled:
-  ${rebuttalsHandled.map(r => `  ✓ ${r}`).join('\n')}` : ''}
+    if (passUp.notes) {
+      text += `\n\n  Notes: ${passUp.notes}`;
+    }
   
-  ${passUp.notes ? `📝 Notes: ${passUp.notes}` : ''}`;
+    return text;
   }

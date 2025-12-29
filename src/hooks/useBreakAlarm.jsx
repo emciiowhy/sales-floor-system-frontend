@@ -28,7 +28,7 @@ export function useBreakAlarm(agentId) {
   // Load schedule from API
   const loadSchedule = useCallback(async () => {
     if (!agentId) {
-      console.error('No agentId provided to useBreakAlarm');
+      console.warn('No agentId provided to useBreakAlarm');
       setLoading(false);
       return;
     }

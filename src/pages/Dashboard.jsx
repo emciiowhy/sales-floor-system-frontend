@@ -98,10 +98,10 @@ function Dashboard() {
       try {
         agentData = await api.getAgent(agentId);
       } catch (agentError) {
-        const isNotFound = agentError.status === 404 || 
-                          agentError.message?.toLowerCase().includes('not found') ||
-                          agentError.message?.toLowerCase().includes('404');
-        
+        const isNotFound = agentError.status === 404 ||
+          agentError.message?.toLowerCase().includes('not found') ||
+          agentError.message?.toLowerCase().includes('404');
+
         if (isNotFound) {
           toast.error('Agent not found. Please log in again.');
           localStorage.removeItem('agentId');
@@ -157,7 +157,7 @@ function Dashboard() {
       sessionStorage.setItem('prefetch_agent', JSON.stringify(agentData));
     } catch (error) {
       console.error('Failed to load dashboard:', error);
-      
+
       // Check if it's a connection error
       if (error.isConnectionError) {
         toast.error('Backend server is not running. Please start the backend server.', {
@@ -167,7 +167,7 @@ function Dashboard() {
       } else {
         toast.error('Failed to load dashboard: ' + (error.message || 'Unknown error'));
       }
-      
+
       // Always set default stats to prevent null errors
       setStats({
         hot: 0,
@@ -220,7 +220,7 @@ function Dashboard() {
       await api.deletePassUp(passUp.id, agentId);
       setDispositionPassUps(prev => prev.filter(p => p.id !== passUp.id));
       toast.success('Pass-up deleted successfully!');
-      
+
       // Refresh stats after deletion
       try {
         const updatedStats = await api.getAgentStats(agentId, 'daily');
@@ -267,7 +267,7 @@ function Dashboard() {
       setEditingPassUp(null);
       setEditFormData({});
       toast.success('Pass-up updated successfully!');
-      
+
       // Refresh stats after update
       try {
         const updatedStats = await api.getAgentStats(agentId, 'daily');
@@ -335,8 +335,8 @@ function Dashboard() {
 
   // Filter and sort pass-ups
   const filteredAndSortedPassUps = useMemo(() => {
-    let filtered = dispositionPassUps.filter(p => 
-      !searchQuery || 
+    let filtered = dispositionPassUps.filter(p =>
+      !searchQuery ||
       p.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.notes?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.phoneNumber?.includes(searchQuery)
@@ -370,7 +370,7 @@ function Dashboard() {
       new Date(p.createdAt).toLocaleString()
     ]);
 
-    const csv = [headers, ...rows].map(row => 
+    const csv = [headers, ...rows].map(row =>
       row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
     ).join('\n');
 
@@ -522,12 +522,11 @@ function Dashboard() {
           <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 dark:from-blue-800 dark:via-blue-700 dark:to-indigo-800 rounded-2xl p-6 sm:p-8 text-white shadow-xl">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Welcome back, {agentName.split(' ')[0]}!</h1>
             <p className="text-blue-100 text-base sm:text-lg max-w-2xl">
-              You're doing amazing! Keep up the momentum and hit your targets today. 
+              You're doing amazing! Keep up the momentum and hit your targets today.
             </p>
           </div>
-
           {/* Top Metrics Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Total Pass-Ups Card */}
             <div className="card group bg-white dark:bg-slate-900 hover:shadow-xl transition-all">
               <div className="flex justify-between items-start mb-4">
@@ -563,20 +562,34 @@ function Dashboard() {
               </div>
               <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
                 <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mb-2">
-                  <div 
+                  <div
                     className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(stats.targetProgress?.productivePercent || 0, 100)}%` }}
                   ></div>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0) > 0 
+                  {(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0) > 0
                     ? `${(stats.targetProgress?.productiveGoal || 0) - (stats.targetProgress?.productive || 0)} more to goal`
                     : '✓ Goal reached!'}
                 </p>
               </div>
             </div>
 
-
+            {/* Leaderboards Card */}
+            <div className="card group bg-white dark:bg-slate-900 hover:shadow-xl transition-all">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Leaderboards</p>
+                  <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">Top Agents</p>
+                </div>
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                  <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+              <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
+                <LeaderboardSidebar />
+              </div>
+            </div>
           </div>
 
           {/* Disposition Breakdown Row */}
@@ -595,126 +608,73 @@ function Dashboard() {
               <StatBadge label="WSMSNT" value={stats.wsmsnt || 0} color="bg-wsmsnt" onClick={() => handleViewDisposition('WSMSNT')} />
             </div>
           </div>
-
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Sales Script and Actions */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Sales Script Section */}
-              <div className="card">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg shadow-md">
-                      <FileText className="w-5 h-5 text-white" />
-                    </div>
-                    <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-                      Sales Script
-                    </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sales Script */}
+            <div className="card flex flex-col h-full">
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                    {editingScript ? (
-                      <>
-                        <button
-                          onClick={handleSaveScript}
-                          disabled={savingScript}
-                          className="btn-primary flex items-center gap-2 text-xs sm:text-sm disabled:opacity-50 py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
-                        >
-                          <Save className="w-4 h-4" />
-                          <span>{savingScript ? 'Saving...' : 'Save'}</span>
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          disabled={savingScript}
-                          className="btn-secondary flex items-center gap-2 text-xs sm:text-sm disabled:opacity-50 py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
-                        >
-                          <X className="w-4 h-4" />
-                          <span>Cancel</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={handleEditScript}
-                          className="btn-secondary flex items-center gap-2 text-xs sm:text-sm py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Edit</span>
-                        </button>
-                        {customScript && (
-                          <button
-                            onClick={handleCopyScript}
-                            className="btn-secondary flex items-center gap-2 text-xs sm:text-sm py-2 px-3 sm:py-2.5 sm:px-4 min-h-10"
-                          >
-                            {scriptCopied ? (
-                              <>
-                                <Check className="w-4 h-4 text-green-600" />
-                                <span className="hidden sm:inline">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-4 h-4" />
-                                <span className="hidden sm:inline">Copy</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  <h2 className="text-lg font-bold">Sales Script</h2>
                 </div>
+                <div className="flex gap-2">
+                  {!editingScript && (
+                    <>
+                      <button onClick={handleEditScript} className="btn-secondary text-xs py-1 px-2">Edit</button>
+                      {customScript && <button onClick={handleCopyScript} className="btn-secondary text-xs py-1 px-2">Copy</button>}
+                    </>
+                  )}
+                  {editingScript && (
+                    <>
+                      <button onClick={handleSaveScript} disabled={savingScript} className="btn-primary text-xs py-1 px-2">{savingScript ? 'Saving...' : 'Save'}</button>
+                      <button onClick={handleCancelEdit} className="btn-secondary text-xs py-1 px-2">Cancel</button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-gray-900 rounded-lg p-4 border border-gray-700 min-h-0">
                 {editingScript ? (
-                  <textarea
-                    value={editedScript}
-                    onChange={(e) => setEditedScript(e.target.value)}
-                    className="w-full input resize-none font-mono text-sm"
-                    rows={10}
+                  <textarea 
+                    value={editedScript} 
+                    onChange={(e) => setEditedScript(e.target.value)} 
+                    className="w-full h-full bg-gray-800 text-gray-100 font-mono text-sm resize-none border-none outline-none"
                     disabled={savingScript}
-                    placeholder="Enter your sales script here..."
                   />
                 ) : customScript ? (
-                  <div className="bg-gradient-to-br from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-inner max-h-64 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap font-mono text-sm text-gray-800 dark:text-gray-200 overflow-x-auto leading-relaxed">
-                      {customScript}
-                    </pre>
-                  </div>
+                  <pre className="text-gray-300 font-mono text-sm whitespace-pre-wrap">{customScript}</pre>
                 ) : (
-                  <div className="bg-gradient-to-br from-gray-50 to-white dark:from-dark-bg dark:to-slate-800 rounded-xl p-12 border-2 border-dashed border-gray-300 dark:border-dark-border text-center">
-                    <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 font-medium">No script saved yet</p>
-                    <button
-                      onClick={handleEditScript}
-                      className="btn-primary"
-                    >
-                      Add Script
-                    </button>
-                  </div>
+                  <p className="text-gray-500 text-center pt-20">No script saved yet</p>
                 )}
               </div>
             </div>
 
-            {/* Right Column - Breaks and Chat */}
-            <div className="space-y-6">
-              {/* Break Schedule Card */}
-              <div className="card p-0 overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-700 dark:to-indigo-800 px-6 py-4">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Break Schedule
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <BreakSchedule />
-                </div>
+            {/* Break Schedule */}
+            <div className="card p-0 overflow-hidden flex flex-col h-full">
+              <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-700 dark:to-indigo-800 px-6 py-5 flex-shrink-0">
+                <h3 className="text-lg font-bold text-white flex items-center gap-3">
+                  <Clock className="w-6 h-6" />
+                  Break Schedule
+                </h3>
+                <p className="text-indigo-100 text-sm mt-1">Stay healthy and productive</p>
+              </div>
+              <div className="p-6 flex-1 overflow-y-auto min-h-0">
+                {agentId ? (
+                  <BreakSchedule agentId={agentId} />
+                ) : (
+                  <p className="text-gray-500 text-sm">Unable to load break schedule</p>
+                )}
               </div>
             </div>
           </div>
 
 
-          {/* Break Timers Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BioBreakTimer agentId={agentId} />
-            <BreakTimer agentId={agentId} />
-          </div>
+{/* Break Timers Row */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <BioBreakTimer agentId={agentId} />
+  <BreakTimer agentId={agentId} />
+</div>
 
           {/* Disclaimer */}
           <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-800 dark:to-red-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-red-500/50 dark:border-red-700/50">
@@ -744,13 +704,12 @@ function Dashboard() {
             <div className="bg-gradient-to-r from-gray-900 to-gray-700 dark:from-slate-800 dark:to-slate-900 px-6 py-6 border-b border-gray-200 dark:border-slate-700">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className={`w-5 h-5 ${
-                    selectedDisposition === 'HOT' ? 'bg-hot' :
-                    selectedDisposition === 'WARM' ? 'bg-warm' :
-                    selectedDisposition === 'INT' ? 'bg-int' :
-                    selectedDisposition === 'TIHU' ? 'bg-tihu' :
-                    'bg-wsmsnt'
-                  } rounded-lg shadow-lg`}></div>
+                  <div className={`w-5 h-5 ${selectedDisposition === 'HOT' ? 'bg-hot' :
+                      selectedDisposition === 'WARM' ? 'bg-warm' :
+                        selectedDisposition === 'INT' ? 'bg-int' :
+                          selectedDisposition === 'TIHU' ? 'bg-tihu' :
+                            'bg-wsmsnt'
+                    } rounded-lg shadow-lg`}></div>
                   <div>
                     <h3 className="text-2xl font-bold text-white">{selectedDisposition} Pass-Ups Today</h3>
                     <p className="text-sm text-gray-300">View all {dispositionPassUps.length} lead{dispositionPassUps.length !== 1 ? 's' : ''} for this disposition</p>
@@ -763,7 +722,7 @@ function Dashboard() {
                   <X className="w-6 h-6 text-white" />
                 </button>
               </div>
-              
+
               {/* Quick Stats */}
               {dispositionPassUps.length > 0 && (
                 <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/10">
@@ -840,10 +799,10 @@ function Dashboard() {
                             <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
                               <span className="text-xs font-bold text-white">{index + 1}</span>
                             </div>
-                            
+
                             {/* Disposition Badge */}
                             <DispositionBadge disposition={passUp.disposition} />
-                            
+
                             {/* Time */}
                             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 ml-auto">
                               ⏰ {new Date(passUp.createdAt).toLocaleTimeString()}
@@ -935,7 +894,7 @@ function Dashboard() {
                   <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">
                     {getMotivationalQuote(selectedDisposition).subtitle}
                   </p>
-                  
+
                   {/* Call to Action */}
                   <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -1041,11 +1000,10 @@ function Dashboard() {
                     <button
                       key={value}
                       onClick={() => setEditFormData({ ...editFormData, disposition: value })}
-                      className={`py-2 px-2 rounded font-semibold text-white text-xs transition-all ${
-                        editFormData.disposition === value
+                      className={`py-2 px-2 rounded font-semibold text-white text-xs transition-all ${editFormData.disposition === value
                           ? `${color} ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-slate-800 scale-105`
                           : `${color} opacity-60 hover:opacity-100`
-                      }`}
+                        }`}
                     >
                       {value}
                     </button>

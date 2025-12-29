@@ -3,15 +3,12 @@ import { Trophy, Medal, Award, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../utils/api';
 
-function LeaderboardSidebar({ period = 'daily', limit = 5 }) {
+function LeaderboardSidebar({ agentId, period = 'daily', limit = 5 }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  const currentAgentId = localStorage.getItem('agentId');
 
   useEffect(() => {
     loadLeaderboard();
-    // Refresh every 60 seconds to reduce API calls
     const interval = setInterval(loadLeaderboard, 60000);
     return () => clearInterval(interval);
   }, [period]);
@@ -87,7 +84,7 @@ function LeaderboardSidebar({ period = 'daily', limit = 5 }) {
           <div
             key={agent.agentId}
             className={`p-4 rounded-xl transition-all duration-200 ${
-              agent.agentId === currentAgentId
+              agent.agentId === agentId
                 ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-300 dark:border-blue-700 shadow-md'
                 : 'bg-gray-50 dark:bg-dark-bg hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-gray-200 dark:border-dark-border hover:shadow-sm'
             }`}
@@ -101,7 +98,7 @@ function LeaderboardSidebar({ period = 'daily', limit = 5 }) {
                   <span className="font-semibold text-sm block">
                     {agent.agentName}
                   </span>
-                  {agent.agentId === currentAgentId && (
+                  {agent.agentId === agentId && (
                     <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">You</span>
                   )}
                 </div>
@@ -131,4 +128,3 @@ function LeaderboardSidebar({ period = 'daily', limit = 5 }) {
 }
 
 export default LeaderboardSidebar;
-

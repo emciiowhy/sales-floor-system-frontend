@@ -116,13 +116,20 @@ function BreakTimer({ agentId }) {
       const interval = setInterval(() => {
         const now = Date.now();
         const elapsedSeconds = Math.floor((now - breakStartTime) / 1000);
+        const totalSeconds = getBreakDuration(activeBreak.type) * 60;
+        
         setBreakElapsed(elapsedSeconds);
+        
+        // Auto-refresh when break expires
+        if (elapsedSeconds >= totalSeconds) {
+          loadActiveBreak();
+        }
       }, 1000);
       return () => clearInterval(interval);
     } else {
       setBreakElapsed(0);
     }
-  }, [activeBreak, breakStartTime]);
+  }, [activeBreak, breakStartTime, getBreakDuration]);
 
   // Set break start time when break becomes active
   useEffect(() => {
@@ -149,9 +156,9 @@ function BreakTimer({ agentId }) {
 
   useEffect(() => {
     if (!activeBreak && schedule && schedule.firstBreak) {
-      // Update countdown every 30 seconds instead of every second
+      // Update countdown every second for smooth timer display
       calculateNextBreak();
-      const interval = setInterval(calculateNextBreak, 30000);
+      const interval = setInterval(calculateNextBreak, 1000);
       return () => clearInterval(interval);
     }
   }, [activeBreak, schedule, calculateNextBreak]);

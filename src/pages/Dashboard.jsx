@@ -486,6 +486,14 @@ function Dashboard() {
                 <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
               </button>
               <button
+                onClick={() => navigate('/passup')}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white transition-all duration-200 hover:scale-105 active:scale-95 min-h-11 font-medium text-sm"
+                title="Create new pass-up"
+              >
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">New Pass-Up</span>
+              </button>
+              <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2.5 sm:p-3 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-110 active:scale-95 min-h-11 min-w-11"
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -568,26 +576,7 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* LeaderBoard Quick Access */}
-            <button
-              onClick={() => navigate('/leaderboard')}
-              className="card group bg-gradient-to-br from-yellow-400 to-orange-500 hover:shadow-xl transition-all text-white cursor-pointer border-0"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="text-sm font-medium text-orange-100">Full Leaderboard</p>
-                  <p className="text-3xl font-bold mt-1">View All</p>
-                </div>
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="pt-4 border-t border-orange-300/30">
-                <p className="text-xs text-orange-100">
-                  See how you rank
-                </p>
-              </div>
-            </button>
+
           </div>
 
           {/* Disposition Breakdown Row */}
@@ -719,39 +708,7 @@ function Dashboard() {
               </div>
             </div>
           </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-          <button
-            onClick={() => navigate('/passup')}
-            className="card-hover group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative flex items-center gap-3 sm:gap-4">
-              <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
-                <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-base sm:text-lg mb-1">New Pass-Up</h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Submit a new lead</p>
-              </div>
-            </div>
-          </button>
 
-          <button
-            onClick={() => navigate('/leaderboard')}
-            className="card-hover group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative flex items-center gap-3 sm:gap-4">
-              <div className="p-3 sm:p-4 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 flex-shrink-0">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-base sm:text-lg mb-1">Full Leaderboard</h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">View all rankings</p>
-              </div>
-            </div>
-          </button>
-        </div>
 
           {/* Break Timers Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

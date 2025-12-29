@@ -14,7 +14,6 @@ export default function Chat({ agentId, agentName }) {
   const lastFetchTimeRef = useRef(Date.now());
   const pollIntervalRef = useRef(null);
 
-  // Scroll to bottom within the chat container only
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {
       setTimeout(() => {
@@ -27,7 +26,6 @@ export default function Chat({ agentId, agentName }) {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Load initial messages
   useEffect(() => {
     const loadInitialMessages = async () => {
       try {
@@ -53,7 +51,6 @@ export default function Chat({ agentId, agentName }) {
     loadInitialMessages();
   }, []);
 
-  // Poll for new messages
   useEffect(() => {
     const pollMessages = async () => {
       try {
@@ -64,7 +61,6 @@ export default function Chat({ agentId, agentName }) {
           if (response.messages.length > 0) {
             setMessages(prev => {
               const newMessages = [...prev, ...response.messages];
-              // Remove duplicates by id
               const uniqueMessages = Array.from(
                 new Map(newMessages.map(m => [m.id, m])).values()
               );
@@ -79,8 +75,7 @@ export default function Chat({ agentId, agentName }) {
       }
     };
 
-    // Start polling
-    pollIntervalRef.current = setInterval(pollMessages, 1500); // Poll every 1.5 seconds
+    pollIntervalRef.current = setInterval(pollMessages, 1500);
 
     return () => {
       if (pollIntervalRef.current) {
@@ -110,7 +105,7 @@ export default function Chat({ agentId, agentName }) {
     } catch (err) {
       console.error('Failed to send message:', err);
       setError('Failed to send message');
-      setInput(messageContent); // Restore input on error
+      setInput(messageContent);
       toast.error('Failed to send message');
     } finally {
       setSending(false);
@@ -118,7 +113,7 @@ export default function Chat({ agentId, agentName }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg overflow-hidden">
+    <div className="relative flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg overflow-visible" style={{ position: 'relative', zIndex: 50, height: '500px', maxHeight: '90vh' }}>
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800">
         <h3 className="text-lg font-bold text-white">Team Chat</h3>
@@ -156,7 +151,6 @@ export default function Chat({ agentId, agentName }) {
                 className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2`}
               >
                 <div className={`flex gap-2 max-w-xs ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {/* Avatar */}
                   {!isOwnMessage && (
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                       <span className="text-xs font-bold text-white">
@@ -165,7 +159,6 @@ export default function Chat({ agentId, agentName }) {
                     </div>
                   )}
 
-                  {/* Message Bubble */}
                   <div
                     className={`px-3 py-2 rounded-2xl max-w-xs break-words ${
                       isOwnMessage
@@ -193,7 +186,6 @@ export default function Chat({ agentId, agentName }) {
                     </p>
                   </div>
 
-                  {/* Avatar for own message */}
                   {isOwnMessage && (
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
                       <span className="text-xs font-bold text-white">
@@ -210,27 +202,32 @@ export default function Chat({ agentId, agentName }) {
 
       {/* Error Message */}
       {error && (
-        <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium">
+        <div className="flex-shrink-0 px-4 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium">
           {error}
         </div>
       )}
 
       {/* Input Form */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900" style={{ position: 'relative', zIndex: 9999 }}>
+        <form onSubmit={handleSendMessage} className="flex gap-2 relative" style={{ position: 'relative', zIndex: 9999 }}>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
             placeholder="Type a message... 😊"
-            disabled={sending}
             maxLength={1000}
-            className="flex-1 px-4 py-2.5 text-sm border border-gray-300 dark:border-slate-600 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 transition-all"
+            autoFocus={true}
+            aria-label="Team chat input"
+            style={{ position: 'relative', zIndex: 9999 }}
+            className="flex-1 px-4 py-2.5 text-sm border border-gray-300 dark:border-slate-600 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:placeholder-gray-400 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 transition-all"
           />
           <button
             type="submit"
             disabled={!input.trim() || sending}
-            className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg active:scale-95 flex items-center gap-1 font-medium"
+            style={{ position: 'relative', zIndex: 9999 }}
+            className="flex-shrink-0 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-lg active:scale-95 flex items-center gap-1 font-medium"
             title="Send message"
           >
             {sending ? (

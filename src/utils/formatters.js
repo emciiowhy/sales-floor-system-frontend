@@ -1,12 +1,10 @@
 export function formatPassUpForCopy(passUp) {
-    const date = new Date(passUp.date).toLocaleString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+const date = new Date(passUp.date).toLocaleString('en-US', {
+  month: '2-digit',
+  day: '2-digit',
+  year: '2-digit',
+  hour12: true
+});
   
     const priceInfo = passUp.tickerPrice ? ` $${passUp.tickerPrice}` : '';
     const changeInfo = passUp.tickerPrice ? ' (+XX%)' : ''; // You can calculate this if you store previous price
@@ -29,13 +27,11 @@ export function formatPassUpForCopy(passUp) {
       });
     }
   
-    let text = `PASS-UP | ${date}
-  
-  TICKER ${passUp.ticker}${priceInfo}
-  NAME: ${passUp.leadName}
-  Interested In: ${passUp.interestedIn}
-  SMS: ${passUp.agreedToSMS ? 'Yes' : 'No'}
-  Disposition: ${passUp.disposition}`;
+let text = `${date} | ${passUp.ticker}:${priceInfo}
+NAME: ${passUp.leadName}
+Interested In: ${passUp.interestedIn}
+SMS: ${passUp.agreedToSMS ? 'Yes' : 'No'}
+Disposition: ${passUp.disposition}`;
   
     if (rebuttalsHandled.length > 0) {
       text += `\n\n  Rebuttals Handled:

@@ -34,13 +34,17 @@ function Leaderboard() {
       setLoading(false);
     }
   };
-
   const getRankIcon = (rank) => {
     if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-500" />;
     if (rank === 2) return <Medal className="w-6 h-6 text-gray-400" />;
     if (rank === 3) return <Award className="w-6 h-6 text-orange-600" />;
     return <span className="text-lg font-bold text-gray-600 dark:text-gray-400">#{rank}</span>;
   };
+const handleAgentClick = (agent) => {
+  toast.info(`Viewing stats for ${agent.agentName}`);
+  // Comment out or remove the navigate line
+  // navigate(`/agent/${agent.agentId}`);
+};
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-bg pb-8">

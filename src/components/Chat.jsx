@@ -1,18 +1,72 @@
+// Add to Chat.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import { api } from '../utils/api.js';
 import { toast } from 'sonner';
 
-export default function Chat({ agentId, agentName }) {
+export default function Chat({ agentId, agentName, onUnreadCountChange }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const [lastSeenMessageId, setLastSeenMessageId] = useState(null);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const lastFetchTimeRef = useRef(Date.now());
   const pollIntervalRef = useRef(null);
+
+  // Track unread messages
+  useEffect(() => {
+    const stored = localStorage.getItem(`lastSeenMessage_${agentId}`);
+    if (stored) {
+      setLastSeenMessageId(stored);
+    }
+  }, [agentId]);
+
+// Calculate and report unread count
+useEffect(() => {
+  if (!onUnreadCountChange) return;
+  
+  if (messages.length === 0) {
+    onUnreadCountChange(0);
+    return;
+  }
+
+  const stored = localStorage.getItem(`lastSeenMessage_${agentId}`);
+  
+  if (!stored) {
+    // No last seen message - count all messages from others
+    const otherMessagesCount = messages.filter(m => m.agent?.id !== agentId).length;
+    onUnreadCountChange(otherMessagesCount);
+    return;
+  }
+
+  const lastSeenIndex = messages.findIndex(m => m.id === stored);
+  
+  if (lastSeenIndex === -1) {
+    // Last seen message not found - count all messages from others
+    const otherMessagesCount = messages.filter(m => m.agent?.id !== agentId).length;
+    onUnreadCountChange(otherMessagesCount);
+  } else {
+    // Count messages after the last seen one, from other agents only
+    const unreadMessages = messages.slice(lastSeenIndex + 1);
+    const otherMessagesCount = unreadMessages.filter(m => m.agent?.id !== agentId).length;
+    onUnreadCountChange(otherMessagesCount);
+  }
+}, [messages, agentId, onUnreadCountChange]);
+
+// Mark messages as seen when chat is visible
+useEffect(() => {
+  if (messages.length > 0) {
+    const latestMessage = messages[messages.length - 1];
+    localStorage.setItem(`lastSeenMessage_${agentId}`, latestMessage.id);
+    // Immediately update unread count to 0
+    if (onUnreadCountChange) {
+      onUnreadCountChange(0);
+    }
+  }
+}, [messages, agentId, onUnreadCountChange]);
 
   const scrollToBottom = useCallback(() => {
     if (messagesContainerRef.current) {

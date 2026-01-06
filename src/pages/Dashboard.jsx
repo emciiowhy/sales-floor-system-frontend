@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, memo, useRef, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp, Trash2, MessageCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Moon, Sun, LogOut, Plus, TrendingUp, Copy, Check, FileText, Edit2, Save, X, Clock, Target, ChevronDown, ChevronUp, Search, Download, ArrowUp, ArrowLeft, Trash2, MessageCircle } from 'lucide-react';import { toast } from 'sonner';
 import { api } from '../utils/api';
 import { useDarkMode } from '../hooks/useDarkMode';
 import StockTicker from '../components/StockTicker';
@@ -51,10 +50,50 @@ function Dashboard() {
   const [editFormData, setEditFormData] = useState({});
   const [savingPassUp, setSavingPassUp] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const scrollRef = useRef(null);
+
 
   const agentId = localStorage.getItem('agentId');
   const agentName = localStorage.getItem('agentName');
+// Poll for unread messages when chat is closed
+useEffect(() => {
+  if (showChatModal) {
+    // Chat is open - no unread messages
+    setUnreadChatCount(0);
+    return;
+  }
+
+  const checkUnreadMessages = async () => {
+    try {
+      const lastSeenId = localStorage.getItem(`lastSeenMessage_${agentId}`);
+      const response = await api.getMessages(100, 0);
+      
+      if (response && response.messages && Array.isArray(response.messages)) {
+        if (!lastSeenId) {
+          const otherMessages = response.messages.filter(m => m.agent?.id !== agentId);
+          setUnreadChatCount(otherMessages.length);
+        } else {
+          const lastSeenIndex = response.messages.findIndex(m => m.id === lastSeenId);
+          if (lastSeenIndex === -1) {
+            const otherMessages = response.messages.filter(m => m.agent?.id !== agentId);
+            setUnreadChatCount(otherMessages.length);
+          } else {
+            const unreadMessages = response.messages.slice(lastSeenIndex + 1);
+            const otherMessages = unreadMessages.filter(m => m.agent?.id !== agentId);
+            setUnreadChatCount(otherMessages.length);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to check unread messages:', err);
+    }
+  };
+
+  checkUnreadMessages();
+  const interval = setInterval(checkUnreadMessages, 3000);
+  return () => clearInterval(interval);
+}, [agentId, showChatModal]);
 
   const loadDashboard = useCallback(async () => {
     if (!agentId) {
@@ -576,18 +615,24 @@ function Dashboard() {
             </div>
 
             {/* Leaderboards Card */}
-            <div className="card group bg-white dark:bg-slate-900 hover:shadow-xl transition-all">
+            <div
+              onClick={() => navigate('/leaderboard')}
+              className="card group bg-white dark:bg-slate-900 hover:shadow-xl transition-all cursor-pointer"
+            >
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Leaderboards</p>
                   <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">Top Agents</p>
                 </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
                   <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
               <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
                 <LeaderboardSidebar />
+              </div>
+              <div className="mt-4 flex items-center justify-center text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                View Full Leaderboard →
               </div>
             </div>
           </div>
@@ -636,9 +681,9 @@ function Dashboard() {
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-900 rounded-lg p-4 border border-gray-700 min-h-0">
                 {editingScript ? (
-                  <textarea 
-                    value={editedScript} 
-                    onChange={(e) => setEditedScript(e.target.value)} 
+                  <textarea
+                    value={editedScript}
+                    onChange={(e) => setEditedScript(e.target.value)}
                     className="w-full h-full bg-gray-800 text-gray-100 font-mono text-sm resize-none border-none outline-none"
                     disabled={savingScript}
                   />
@@ -670,11 +715,11 @@ function Dashboard() {
           </div>
 
 
-{/* Break Timers Row */}
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  <BioBreakTimer agentId={agentId} />
-  <BreakTimer agentId={agentId} />
-</div>
+          {/* Break Timers Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BioBreakTimer agentId={agentId} />
+            <BreakTimer agentId={agentId} />
+          </div>
 
           {/* Disclaimer */}
           <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-800 dark:to-red-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-red-500/50 dark:border-red-700/50">
@@ -705,10 +750,10 @@ function Dashboard() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1">
                   <div className={`w-5 h-5 ${selectedDisposition === 'HOT' ? 'bg-hot' :
-                      selectedDisposition === 'WARM' ? 'bg-warm' :
-                        selectedDisposition === 'INT' ? 'bg-int' :
-                          selectedDisposition === 'TIHU' ? 'bg-tihu' :
-                            'bg-wsmsnt'
+                    selectedDisposition === 'WARM' ? 'bg-warm' :
+                      selectedDisposition === 'INT' ? 'bg-int' :
+                        selectedDisposition === 'TIHU' ? 'bg-tihu' :
+                          'bg-wsmsnt'
                     } rounded-lg shadow-lg`}></div>
                   <div>
                     <h3 className="text-2xl font-bold text-white">{selectedDisposition} Pass-Ups Today</h3>
@@ -925,19 +970,26 @@ function Dashboard() {
       {editingPassUp && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Edit2 className="w-5 h-5" />
-                <h2 className="text-xl font-bold">Edit Pass-Up</h2>
-              </div>
-              <button
-                onClick={handleCancelEditPassUp}
-                className="p-1 hover:bg-white/20 rounded transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+{/* Modal Header */}
+<div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 px-6 py-4 border-b border-blue-500/30 flex items-center justify-between">
+  <div className="flex items-center gap-3">
+    <button
+      onClick={() => setShowChatModal(false)}
+      className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+      title="Go back"
+    >
+      <ArrowLeft className="w-5 h-5" />
+    </button>
+    <h3 className="text-xl font-bold text-white">Team Chat</h3>
+  </div>
+  <button
+    onClick={() => setShowChatModal(false)}
+    className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+    title="Close"
+  >
+    <X className="w-6 h-6" />
+  </button>
+</div>
 
             {/* Modal Body */}
             <div className="p-6 space-y-4">
@@ -1001,8 +1053,8 @@ function Dashboard() {
                       key={value}
                       onClick={() => setEditFormData({ ...editFormData, disposition: value })}
                       className={`py-2 px-2 rounded font-semibold text-white text-xs transition-all ${editFormData.disposition === value
-                          ? `${color} ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-slate-800 scale-105`
-                          : `${color} opacity-60 hover:opacity-100`
+                        ? `${color} ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-slate-800 scale-105`
+                        : `${color} opacity-60 hover:opacity-100`
                         }`}
                     >
                       {value}
@@ -1070,28 +1122,47 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Chat Modal */}
-      {showChatModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 px-6 py-4 border-b border-blue-500/30 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white">Team Chat</h3>
-              <button
-                onClick={() => setShowChatModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            {/* Chat Content */}
-            <div className="flex-1 overflow-hidden">
-              <Chat agentId={agentId} agentName={agentName} />
-            </div>
-          </div>
+{/* Chat Modal */}
+{showChatModal && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Modal Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 px-6 py-4 border-b border-blue-500/30 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowChatModal(false)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+            title="Go back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h3 className="text-xl font-bold text-white">Team Chat</h3>
         </div>
-      )}
-
+        <button
+          onClick={() => setShowChatModal(false)}
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
+          title="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+      
+      {/* Chat Content */}
+      <div className="flex-1 overflow-hidden">
+        <Chat 
+          agentId={agentId} 
+          agentName={agentName}
+          onUnreadCountChange={(count) => {
+            // Only update unread count if chat is closed
+            if (!showChatModal) {
+              setUnreadChatCount(count);
+            }
+          }}
+        />
+      </div>
+    </div>
+  </div>
+)}
       {/* Scroll to Top Button */}
       {showScrollTop && (
         <button

@@ -9,6 +9,7 @@ import { DarkModeProvider } from './hooks/useDarkMode';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const PassUpForm = lazy(() => import('./pages/PassUpForm'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+const AgentDetail = lazy(() => import('./pages/AgentDetail'));
 
 function ProtectedRoute({ children }) {
   const agentId = localStorage.getItem('agentId');
@@ -53,6 +54,16 @@ function App() {
               <ProtectedRoute>
                 <Suspense fallback={<LoadingSplash />}>
                   <Leaderboard />
+                </Suspense>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/agent/:agentId" 
+            element={
+              <ProtectedRoute>
+                <Suspense fallback={<LoadingSplash />}>
+                  <AgentDetail />
                 </Suspense>
               </ProtectedRoute>
             } 
